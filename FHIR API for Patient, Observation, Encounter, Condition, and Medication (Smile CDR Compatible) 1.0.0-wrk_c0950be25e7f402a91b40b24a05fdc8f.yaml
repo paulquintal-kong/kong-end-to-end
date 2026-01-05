@@ -1,0 +1,1311 @@
+type: spec.insomnia.rest/5.0
+schema_version: "5.1"
+name: FHIR API for Patient, Observation, Encounter, Condition, and Medication
+  (Smile CDR Compatible) 1.0.0
+meta:
+  id: wrk_c0950be25e7f402a91b40b24a05fdc8f
+  created: 1767589697246
+  modified: 1767589697245
+  description: ""
+collection:
+  - name: Patient
+    meta:
+      id: fld_9ad4bd7f690c412094e7adca28934278
+      created: 1767590251173
+      modified: 1767590251173
+      sortKey: -1767590251173
+      description: Operations related to Patient resources
+    children:
+      - url: "{{ _.base_url }}/Patient"
+        name: Search for Patient resources
+        meta:
+          id: req_378dfdd696814562be73477b4d808657
+          created: 1767590251175
+          modified: 1767590290249
+          isPrivate: false
+          description: Returns a bundle of Patient resources based on search criteria.
+          sortKey: -1767590251175
+        method: GET
+        parameters:
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient"
+        name: Create a new Patient resource
+        meta:
+          id: req_fbcbc1f79f494d2593819fa4f787c719
+          created: 1767590251175
+          modified: 1767591478222
+          isPrivate: false
+          description: Creates a new Patient resource.
+          sortKey: -1767590251175
+        method: POST
+        body:
+          mimeType: application/fhir+json
+          text: |-
+            {
+              "resourceType": "Patient",
+              "id": "string",
+              "identifier": [
+                {
+                  "system": "http://example.com/fhir/patient-identifier",
+                  "value": "12345"
+                }
+              ],
+              "name": [
+                {
+                  "family": "Doe",
+                  "given": [
+                    "John"
+                  ]
+                }
+              ],
+              "gender": "male",
+              "birthDate": "1970-01-01"
+            }
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient/{% prompt 'ID', 'Patient ID', '\"12345\"', '',
+          false, true %}"
+        name: Retrieve a Patient resource by ID
+        meta:
+          id: req_e220637f4f3e40129606c93ac87a51db
+          created: 1767590251176
+          modified: 1767592214946
+          isPrivate: false
+          description: Returns a specific Patient resource based on its ID.
+          sortKey: -1767590251176
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Encounter
+    meta:
+      id: fld_53b0844526f447429b1f009aa4926ec4
+      created: 1767590251174
+      modified: 1767590251174
+      sortKey: -1767590251174
+      description: Operations related to Encounter resources
+    children:
+      - url: "{{ _.base_url }}/Encounter"
+        name: Search for Encounter resources
+        meta:
+          id: req_bbb3f5fcf5cc4263a9fd52cb3cbd1c9f
+          created: 1767590251176
+          modified: 1767590251176
+          isPrivate: false
+          description: Returns a bundle of Encounter resources based on search criteria.
+          sortKey: -1767590251176
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter/{{ _.id }}"
+        name: Retrieve an Encounter resource by ID
+        meta:
+          id: req_060a47db00ac4250bb28c87192b8c2bb
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Returns a specific Encounter resource based on its ID.
+          sortKey: -1767590251177
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter"
+        name: Create a new Encounter resource
+        meta:
+          id: req_fdf7d48a55e04f6d9c06170b16bb0de6
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Creates a new Encounter resource.
+          sortKey: -1767590251177
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Medication
+    meta:
+      id: fld_78f7466e004b439c8c501292dfa803b8
+      created: 1767590251174
+      modified: 1767590251174
+      sortKey: -1767590251174
+      description: Operations related to Medication resources
+    children:
+      - url: "{{ _.base_url }}/Medication"
+        name: Search for Medication resources
+        meta:
+          id: req_59b36e0fa22547ae966d24ce137964b1
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Returns a bundle of Medication resources based on search criteria.
+          sortKey: -1767590251177
+        method: GET
+        parameters:
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication"
+        name: Create a new Medication resource
+        meta:
+          id: req_cd29e04a0bb647cb9d3aebc8ecf22777
+          created: 1767590251178
+          modified: 1767590251178
+          isPrivate: false
+          description: Creates a new Medication resource.
+          sortKey: -1767590251178
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication/{{ _.id }}"
+        name: Retrieve a Medication resource by ID
+        meta:
+          id: req_dc3ca95216954afa9ded0113be6d480d
+          created: 1767590251178
+          modified: 1767590251178
+          isPrivate: false
+          description: Returns a specific Medication resource based on its ID.
+          sortKey: -1767590251178
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Observation
+    meta:
+      id: fld_d6dbae474e4a47868d82ca688e0e5075
+      created: 1767590251174
+      modified: 1767590251174
+      sortKey: -1767590251174
+      description: Operations related to Observation resources
+    children:
+      - url: "{{ _.base_url }}/Observation"
+        name: Create a new Observation resource
+        meta:
+          id: req_7d193defd44c4f099c24640bc6a91bc6
+          created: 1767590251176
+          modified: 1767590251176
+          isPrivate: false
+          description: Creates a new Observation resource.
+          sortKey: -1767590251176
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation/{{ _.id }}"
+        name: Retrieve an Observation resource by ID
+        meta:
+          id: req_e66950629957463991ce135b76861a8c
+          created: 1767590251176
+          modified: 1767590251176
+          isPrivate: false
+          description: Returns a specific Observation resource based on its ID.
+          sortKey: -1767590251176
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation"
+        name: Search for Observation resources
+        meta:
+          id: req_e7bf058e613a475283ed608591e42f56
+          created: 1767590251176
+          modified: 1767590251176
+          isPrivate: false
+          description: Returns a bundle of Observation resources based on search criteria.
+          sortKey: -1767590251176
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Condition
+    meta:
+      id: fld_f84221d488ed4675a45a90a0c8148335
+      created: 1767590251174
+      modified: 1767590251174
+      sortKey: -1767590251174
+      description: Operations related to Condition resources
+    children:
+      - url: "{{ _.base_url }}/Condition"
+        name: Create a new Condition resource
+        meta:
+          id: req_4952aafab6424b08903f98fd0e3e8401
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Creates a new Condition resource.
+          sortKey: -1767590251177
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition"
+        name: Search for Condition resources
+        meta:
+          id: req_994d575cd57e467792d94bb4a184f459
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Returns a bundle of Condition resources based on search criteria.
+          sortKey: -1767590251177
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition/{{ _.id }}"
+        name: Retrieve a Condition resource by ID
+        meta:
+          id: req_d71535520b134f9489c8650ae6021723
+          created: 1767590251177
+          modified: 1767590251177
+          isPrivate: false
+          description: Returns a specific Condition resource based on its ID.
+          sortKey: -1767590251177
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_cdb4d8e78f53007e86e2209cf1b3e0ca5cae6073
+    created: 1767589701067
+    modified: 1767589701067
+environments:
+  name: Base Environment
+  meta:
+    id: env_cdb4d8e78f53007e86e2209cf1b3e0ca5cae6073
+    created: 1767589697249
+    modified: 1767590652331
+    isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
+    scheme: http
+    host: localhost:8080/
+    base_path: fhir
+  subEnvironments:
+    - name: OpenAPI env localhost:8080
+      meta:
+        id: env_925db6db5c134370a56dfc5883a45321
+        created: 1767590251173
+        modified: 1767590251173
+        isPrivate: false
+        sortKey: 1767590251173
+      data:
+        scheme: http
+        base_path: /fhir
+        host: localhost:8080
+spec:
+  contents:
+    openapi: 3.1.0
+    info:
+      title: FHIR API for Patient, Observation, Encounter, Condition, and Medication
+        (Smile CDR Compatible)
+      description: >-
+        This API provides access to FHIR resources including Patient,
+        Observation, Encounter, Condition, and Medication. It is designed to be
+        compatible with Smile CDR.
+
+
+        **Note:** This specification provides a basic structure and may need to
+        be extended with Smile CDR specific profiles and extensions for full
+        compatibility.
+      version: 1.0.0
+      contact:
+        name: Solution Engineer
+        url: https://www.konghq.com
+        email: paul.quintal@honghq.com
+    servers:
+      - url: http://localhost:8080/fhir
+        description: Smile CDR FHIR Server (R4)
+    tags:
+      - name: Patient
+        description: Operations related to Patient resources
+      - name: Observation
+        description: Operations related to Observation resources
+      - name: Encounter
+        description: Operations related to Encounter resources
+      - name: Condition
+        description: Operations related to Condition resources
+      - name: Medication
+        description: Operations related to Medication resources
+    paths:
+      /Patient:
+        get:
+          summary: Search for Patient resources
+          description: Returns a bundle of Patient resources based on search criteria.
+          operationId: searchPatient
+          tags:
+            - Patient
+          parameters:
+            - name: _count
+              in: query
+              description: The maximum number of resources to return in a page.
+              schema:
+                type: integer
+                format: int32
+                default: 10
+            - name: _offset
+              in: query
+              description: The number of results to skip for pagination.
+              schema:
+                type: integer
+                format: int32
+                default: 0
+          responses:
+            "200":
+              description: Successful search
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/PatientBundle"
+        post:
+          summary: Create a new Patient resource
+          description: Creates a new Patient resource.
+          operationId: createPatient
+          tags:
+            - Patient
+          requestBody:
+            description: The Patient resource to create.
+            required: true
+            content:
+              application/fhir+json:
+                schema:
+                  $ref: "#/components/schemas/Patient"
+          responses:
+            "201":
+              description: Patient resource created successfully
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Patient"
+      /Patient/{id}:
+        get:
+          summary: Retrieve a Patient resource by ID
+          description: Returns a specific Patient resource based on its ID.
+          operationId: getPatientById
+          tags:
+            - Patient
+          parameters:
+            - name: id
+              in: path
+              description: The ID of the Patient resource to retrieve.
+              required: true
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Successful retrieval
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Patient"
+            "404":
+              description: Patient resource not found
+      /Observation:
+        get:
+          summary: Search for Observation resources
+          description: Returns a bundle of Observation resources based on search criteria.
+          operationId: searchObservation
+          tags:
+            - Observation
+          parameters:
+            - name: patient
+              in: query
+              description: The ID of the patient associated with the observation.
+              schema:
+                type: string
+            - name: code
+              in: query
+              description: The code of the observation.
+              schema:
+                type: string
+            - name: _count
+              in: query
+              description: The maximum number of resources to return in a page.
+              schema:
+                type: integer
+                format: int32
+                default: 10
+            - name: _offset
+              in: query
+              description: The number of results to skip for pagination.
+              schema:
+                type: integer
+                format: int32
+                default: 0
+          responses:
+            "200":
+              description: Successful search
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/ObservationBundle"
+        post:
+          summary: Create a new Observation resource
+          description: Creates a new Observation resource.
+          operationId: createObservation
+          tags:
+            - Observation
+          requestBody:
+            description: The Observation resource to create.
+            required: true
+            content:
+              application/fhir+json:
+                schema:
+                  $ref: "#/components/schemas/Observation"
+          responses:
+            "201":
+              description: Observation resource created successfully
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Observation"
+      /Observation/{id}:
+        get:
+          summary: Retrieve an Observation resource by ID
+          description: Returns a specific Observation resource based on its ID.
+          operationId: getObservationById
+          tags:
+            - Observation
+          parameters:
+            - name: id
+              in: path
+              description: The ID of the Observation resource to retrieve.
+              required: true
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Successful retrieval
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Observation"
+            "404":
+              description: Observation resource not found
+      /Encounter:
+        get:
+          summary: Search for Encounter resources
+          description: Returns a bundle of Encounter resources based on search criteria.
+          operationId: searchEncounter
+          tags:
+            - Encounter
+          parameters:
+            - name: patient
+              in: query
+              description: The ID of the patient associated with the encounter.
+              schema:
+                type: string
+            - name: _count
+              in: query
+              description: The maximum number of resources to return in a page.
+              schema:
+                type: integer
+                format: int32
+                default: 10
+            - name: _offset
+              in: query
+              description: The number of results to skip for pagination.
+              schema:
+                type: integer
+                format: int32
+                default: 0
+          responses:
+            "200":
+              description: Successful search
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/EncounterBundle"
+        post:
+          summary: Create a new Encounter resource
+          description: Creates a new Encounter resource.
+          operationId: createEncounter
+          tags:
+            - Encounter
+          requestBody:
+            description: The Encounter resource to create.
+            required: true
+            content:
+              application/fhir+json:
+                schema:
+                  $ref: "#/components/schemas/Encounter"
+          responses:
+            "201":
+              description: Encounter resource created successfully
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Encounter"
+      /Encounter/{id}:
+        get:
+          summary: Retrieve an Encounter resource by ID
+          description: Returns a specific Encounter resource based on its ID.
+          operationId: getEncounterById
+          tags:
+            - Encounter
+          parameters:
+            - name: id
+              in: path
+              description: The ID of the Encounter resource to retrieve.
+              required: true
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Successful retrieval
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Encounter"
+            "404":
+              description: Encounter resource not found
+      /Condition:
+        get:
+          summary: Search for Condition resources
+          description: Returns a bundle of Condition resources based on search criteria.
+          operationId: searchCondition
+          tags:
+            - Condition
+          parameters:
+            - name: patient
+              in: query
+              description: The ID of the patient associated with the condition.
+              schema:
+                type: string
+            - name: _count
+              in: query
+              description: The maximum number of resources to return in a page.
+              schema:
+                type: integer
+                format: int32
+                default: 10
+            - name: _offset
+              in: query
+              description: The number of results to skip for pagination.
+              schema:
+                type: integer
+                format: int32
+                default: 0
+          responses:
+            "200":
+              description: Successful search
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/ConditionBundle"
+        post:
+          summary: Create a new Condition resource
+          description: Creates a new Condition resource.
+          operationId: createCondition
+          tags:
+            - Condition
+          requestBody:
+            description: The Condition resource to create.
+            required: true
+            content:
+              application/fhir+json:
+                schema:
+                  $ref: "#/components/schemas/Condition"
+          responses:
+            "201":
+              description: Condition resource created successfully
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Condition"
+      /Condition/{id}:
+        get:
+          summary: Retrieve a Condition resource by ID
+          description: Returns a specific Condition resource based on its ID.
+          operationId: getConditionById
+          tags:
+            - Condition
+          parameters:
+            - name: id
+              in: path
+              description: The ID of the Condition resource to retrieve.
+              required: true
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Successful retrieval
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Condition"
+            "404":
+              description: Condition resource not found
+      /Medication:
+        get:
+          summary: Search for Medication resources
+          description: Returns a bundle of Medication resources based on search criteria.
+          operationId: searchMedication
+          tags:
+            - Medication
+          parameters:
+            - name: code
+              in: query
+              description: The code of the medication.
+              schema:
+                type: string
+            - name: _count
+              in: query
+              description: The maximum number of resources to return in a page.
+              schema:
+                type: integer
+                format: int32
+                default: 10
+            - name: _offset
+              in: query
+              description: The number of results to skip for pagination.
+              schema:
+                type: integer
+                format: int32
+                default: 0
+          responses:
+            "200":
+              description: Successful search
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/MedicationBundle"
+        post:
+          summary: Create a new Medication resource
+          description: Creates a new Medication resource.
+          operationId: createMedication
+          tags:
+            - Medication
+          requestBody:
+            description: The Medication resource to create.
+            required: true
+            content:
+              application/fhir+json:
+                schema:
+                  $ref: "#/components/schemas/Medication"
+          responses:
+            "201":
+              description: Medication resource created successfully
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Medication"
+      /Medication/{id}:
+        get:
+          summary: Retrieve a Medication resource by ID
+          description: Returns a specific Medication resource based on its ID.
+          operationId: getMedicationById
+          tags:
+            - Medication
+          parameters:
+            - name: id
+              in: path
+              description: The ID of the Medication resource to retrieve.
+              required: true
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Successful retrieval
+              content:
+                application/fhir+json:
+                  schema:
+                    $ref: "#/components/schemas/Medication"
+            "404":
+              description: Medication resource not found
+    components:
+      schemas:
+        Patient:
+          type: object
+          description: A FHIR Patient resource
+          properties:
+            resourceType:
+              type: string
+              example: Patient
+            id:
+              type: string
+              description: Logical id of this artifact
+              example: string
+            identifier:
+              type: array
+              items:
+                type: object
+                properties:
+                  system:
+                    type: string
+                    example: http://example.com/fhir/patient-identifier
+                  value:
+                    type: string
+                    example: "12345"
+            name:
+              type: array
+              items:
+                type: object
+                properties:
+                  family:
+                    type: string
+                    example: Doe
+                  given:
+                    type: array
+                    items:
+                      type: string
+                      example: John
+            gender:
+              type: string
+              enum:
+                - male
+                - female
+                - other
+                - unknown
+              example: male
+            birthDate:
+              type: string
+              format: date
+              example: 1970-01-01
+        PatientBundle:
+          type: object
+          description: A FHIR Bundle resource containing Patient resources
+          properties:
+            resourceType:
+              type: string
+              example: Bundle
+            type:
+              type: string
+              example: searchset
+            total:
+              type: integer
+              format: int32
+              description: The total number of results matching the query (for pagination).
+            link:
+              type: array
+              items:
+                type: object
+                properties:
+                  relation:
+                    type: string
+                    example: next
+                  url:
+                    type: string
+                    example: https://example.com/Patient?_count=10&_offset=10
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    $ref: "#/components/schemas/Patient"
+        Observation:
+          type: object
+          description: A FHIR Observation resource
+          properties:
+            resourceType:
+              type: string
+              example: Observation
+            id:
+              type: string
+              description: Logical id of this artifact
+              example: string
+            status:
+              type: string
+              enum:
+                - registered
+                - preliminary
+                - final
+                - amended
+                - corrected
+                - cancelled
+                - entered-in-error
+                - unknown
+              example: final
+            code:
+              type: object
+              properties:
+                coding:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                        example: http://loinc.org
+                      code:
+                        type: string
+                        example: 8310-5
+                      display:
+                        type: string
+                        example: Body temperature
+            subject:
+              type: object
+              properties:
+                reference:
+                  type: string
+                  example: Patient/123
+            effectiveDateTime:
+              type: string
+              format: date-time
+              example: 2024-01-22T10:00:00Z
+            valueQuantity:
+              type: object
+              properties:
+                value:
+                  type: number
+                  format: double
+                  example: 37
+                unit:
+                  type: string
+                  example: Cel
+                system:
+                  type: string
+                  example: http://unitsofmeasure.org
+                code:
+                  type: string
+                  example: Cel
+        ObservationBundle:
+          type: object
+          description: A FHIR Bundle resource containing Observation resources
+          properties:
+            resourceType:
+              type: string
+              example: Bundle
+            type:
+              type: string
+              example: searchset
+            total:
+              type: integer
+              format: int32
+              description: The total number of results matching the query (for pagination).
+            link:
+              type: array
+              items:
+                type: object
+                properties:
+                  relation:
+                    type: string
+                    example: next
+                  url:
+                    type: string
+                    example: https://example.com/Observation?patient=123&_count=10&_offset=10
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    $ref: "#/components/schemas/Observation"
+        Encounter:
+          type: object
+          description: A FHIR Encounter resource
+          properties:
+            resourceType:
+              type: string
+              example: Encounter
+            id:
+              type: string
+              description: Logical id of this artifact
+              example: string
+            status:
+              type: string
+              enum:
+                - planned
+                - arrived
+                - triaged
+                - in-progress
+                - onleave
+                - finished
+                - cancelled
+                - entered-in-error
+                - unknown
+              example: in-progress
+            class:
+              type: object
+              properties:
+                system:
+                  type: string
+                  example: http://terminology.hl7.org/CodeSystem/v3-ActCode
+                code:
+                  type: string
+                  example: AMB
+                display:
+                  type: string
+                  example: ambulatory
+            subject:
+              type: object
+              properties:
+                reference:
+                  type: string
+                  example: Patient/123
+            period:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                  example: 2024-01-22T09:00:00Z
+                end:
+                  type: string
+                  format: date-time
+                  example: 2024-01-22T10:00:00Z
+        EncounterBundle:
+          type: object
+          description: A FHIR Bundle resource containing Encounter resources
+          properties:
+            resourceType:
+              type: string
+              example: Bundle
+            type:
+              type: string
+              example: searchset
+            total:
+              type: integer
+              format: int32
+              description: The total number of results matching the query (for pagination).
+            link:
+              type: array
+              items:
+                type: object
+                properties:
+                  relation:
+                    type: string
+                    example: next
+                  url:
+                    type: string
+                    example: https://example.com/Encounter?patient=123&_count=10&_offset=10
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    $ref: "#/components/schemas/Encounter"
+        Condition:
+          type: object
+          description: A FHIR Condition resource
+          properties:
+            resourceType:
+              type: string
+              example: Condition
+            id:
+              type: string
+              description: Logical id of this artifact
+              example: string
+            clinicalStatus:
+              type: object
+              properties:
+                coding:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                        example: http://terminology.hl7.org/CodeSystem/condition-clinical
+                      code:
+                        type: string
+                        example: active
+                      display:
+                        type: string
+                        example: Active
+            verificationStatus:
+              type: object
+              properties:
+                coding:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                        example: http://terminology.hl7.org/CodeSystem/condition-ver-status
+                      code:
+                        type: string
+                        example: confirmed
+                      display:
+                        type: string
+                        example: Confirmed
+            code:
+              type: object
+              properties:
+                coding:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                        example: http://snomed.info/sct
+                      code:
+                        type: string
+                        example: "233604007"
+                      display:
+                        type: string
+                        example: Finding of pneumonia (finding)
+            subject:
+              type: object
+              properties:
+                reference:
+                  type: string
+                  example: Patient/123
+            onsetDateTime:
+              type: string
+              format: date-time
+              example: 2024-01-20T08:00:00Z
+        ConditionBundle:
+          type: object
+          description: A FHIR Bundle resource containing Condition resources
+          properties:
+            resourceType:
+              type: string
+              example: Bundle
+            type:
+              type: string
+              example: searchset
+            total:
+              type: integer
+              format: int32
+              description: The total number of results matching the query (for pagination).
+            link:
+              type: array
+              items:
+                type: object
+                properties:
+                  relation:
+                    type: string
+                    example: next
+                  url:
+                    type: string
+                    example: https://example.com/Condition?patient=123&_count=10&_offset=10
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    $ref: "#/components/schemas/Condition"
+        Medication:
+          type: object
+          description: A FHIR Medication resource
+          properties:
+            resourceType:
+              type: string
+              example: Medication
+            id:
+              type: string
+              description: Logical id of this artifact
+              example: string
+            code:
+              type: object
+              properties:
+                coding:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                        example: http://www.nlm.nih.gov/research/umls/rxnorm
+                      code:
+                        type: string
+                        example: "1191"
+                      display:
+                        type: string
+                        example: Amoxicillin
+            status:
+              type: string
+              enum:
+                - active
+                - inactive
+                - entered-in-error
+              example: active
+        MedicationBundle:
+          type: object
+          description: A FHIR Bundle resource containing Medication resources
+          properties:
+            resourceType:
+              type: string
+              example: Bundle
+            type:
+              type: string
+              example: searchset
+            total:
+              type: integer
+              format: int32
+              description: The total number of results matching the query (for pagination).
+            link:
+              type: array
+              items:
+                type: object
+                properties:
+                  relation:
+                    type: string
+                    example: next
+                  url:
+                    type: string
+                    example: https://example.com/Medication?code=1191&_count=10&_offset=10
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    $ref: "#/components/schemas/Medication"
+  meta:
+    id: spc_6a369b57cb944da5a194c49f4ca41f65
+    created: 1767589697248
+    modified: 1767590150505
