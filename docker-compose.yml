@@ -1,0 +1,41 @@
+services:
+  # Smile CDR FHIR Server (using HAPI FHIR as open-source alternative)
+  # Note: Smile CDR is a commercial product. This uses HAPI FHIR which is compatible
+  fhir-server:
+    image: hapiproject/hapi:latest
+    container_name: smile-cdr-demo
+    ports:
+      - "8080:8080"
+    environment:
+      # Database configuration (using H2 for demo purposes)
+      - hapi.fhir.datasource.driver=org.h2.Driver
+      - hapi.fhir.datasource.url=jdbc:h2:mem:testdb
+      - hapi.fhir.datasource.username=sa
+      - hapi.fhir.datasource.password=
+      # FHIR version
+      - hapi.fhir.fhir_version=R4
+      # Enable CORS
+      - hapi.fhir.cors.allowed_origin=*
+      # Server settings
+      - hapi.fhir.server_address=http://localhost:8080/fhir
+      - hapi.fhir.allow_external_references=true
+      - hapi.fhir.allow_multiple_delete=true
+      - hapi.fhir.allow_placeholder_references=true
+      - hapi.fhir.reuse_cached_search_results_millis=60000
+      # Enable narrative generation
+      - hapi.fhir.narrative_enabled=true
+      # Enable validation
+      - hapi.fhir.validation_enabled=true
+    volumes:
+      - fhir-data:/data/hapi
+    restart: unless-stopped
+    networks:
+      - fhir-network
+
+volumes:
+  fhir-data:
+    driver: local
+
+networks:
+  fhir-network:
+    driver: bridge
