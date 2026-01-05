@@ -1,21 +1,18 @@
 openapi: 3.1.0
 info:
   title: FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible)
-  description: |-
+  description: |
     This API provides access to FHIR resources including Patient, Observation, Encounter, Condition, and Medication. It is designed to be compatible with Smile CDR.
     
     **Note:** This specification provides a basic structure and may need to be extended with Smile CDR specific profiles and extensions for full compatibility.
-  version: '1.0.0'
-  contact:
-    name: Solution Engineer
-    url: https://www.konghq.com
-    email: paul.quintal@honghq.com
+  version: '1.0.1'
 servers:
   - url: https://hapi.fhir.org/baseR4
     description: Smile CDR FHIR Server (R4)
 
 tags:
   - name: Patient
+    description: Operations related to Patient resources
   - name: Observation
     description: Operations related to Observation resources
   - name: Encounter
@@ -41,6 +38,7 @@ paths:
             type: integer
             format: int32
             default: 10
+            maximum: 100
         - name: _offset
           in: query
           description: The number of results to skip for pagination.
@@ -55,6 +53,10 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/PatientBundle'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
     post:
       summary: Create a new Patient resource
       description: Creates a new Patient resource.
@@ -75,6 +77,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Patient'
+        '400':
+          description: Bad Request
   /Patient/{id}:
     get:
       summary: Retrieve a Patient resource by ID
@@ -123,6 +127,7 @@ paths:
             type: integer
             format: int32
             default: 10
+            maximum: 100
         - name: _offset
           in: query
           description: The number of results to skip for pagination.
@@ -137,6 +142,10 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/ObservationBundle'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
     post:
       summary: Create a new Observation resource
       description: Creates a new Observation resource.
@@ -157,6 +166,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Observation'
+        '400':
+          description: Bad Request
   /Observation/{id}:
     get:
       summary: Retrieve an Observation resource by ID
@@ -200,6 +211,7 @@ paths:
             type: integer
             format: int32
             default: 10
+            maximum: 100
         - name: _offset
           in: query
           description: The number of results to skip for pagination.
@@ -214,6 +226,10 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/EncounterBundle'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
     post:
       summary: Create a new Encounter resource
       description: Creates a new Encounter resource.
@@ -234,6 +250,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Encounter'
+        '400':
+          description: Bad Request
   /Encounter/{id}:
     get:
       summary: Retrieve an Encounter resource by ID
@@ -277,6 +295,7 @@ paths:
             type: integer
             format: int32
             default: 10
+            maximum: 100
         - name: _offset
           in: query
           description: The number of results to skip for pagination.
@@ -291,6 +310,10 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/ConditionBundle'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
     post:
       summary: Create a new Condition resource
       description: Creates a new Condition resource.
@@ -311,6 +334,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Condition'
+        '400':
+          description: Bad Request
   /Condition/{id}:
     get:
       summary: Retrieve a Condition resource by ID
@@ -354,6 +379,7 @@ paths:
             type: integer
             format: int32
             default: 10
+            maximum: 100
         - name: _offset
           in: query
           description: The number of results to skip for pagination.
@@ -368,6 +394,10 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/MedicationBundle'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
     post:
       summary: Create a new Medication resource
       description: Creates a new Medication resource.
@@ -388,6 +418,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Medication'
+        '400':
+          description: Bad Request
   /Medication/{id}:
     get:
       summary: Retrieve a Medication resource by ID
@@ -417,6 +449,12 @@ components:
     Patient:
       type: object
       description: A FHIR Patient resource
+      required:
+        - id
+        - identifier
+        - name
+        - birthDate
+        - gender
       properties:
         resourceType:
           type: string
@@ -429,6 +467,9 @@ components:
           type: array
           items:
             type: object
+            required: 
+              - system
+              - value
             properties:
               system:
                 type: string
@@ -440,6 +481,9 @@ components:
           type: array
           items:
             type: object
+            required:
+              - family
+              - given
             properties:
               family:
                 type: string
@@ -461,6 +505,26 @@ components:
           type: string
           format: date
           example: 1970-01-01
+        telecom:
+          type: array
+          items:
+            type: object
+            properties:
+              system:
+                type: string
+                enum:
+                  - phone
+                  - email
+                  - fax
+                  - pager
+                  - url
+                  - sms
+                  - other
+                example: phone
+              value:
+                type: string
+                example: 555-555-5555
+      
     PatientBundle:
       type: object
       description: A FHIR Bundle resource containing Patient resources
@@ -496,6 +560,11 @@ components:
     Observation:
       type: object
       description: A FHIR Observation resource
+      required:
+        - id
+        - status
+        - code
+        - subject
       properties:
         resourceType:
           type: string
@@ -518,11 +587,17 @@ components:
           example: final
         code:
           type: object
+          required:
+            - coding
           properties:
             coding:
               type: array
               items:
                 type: object
+                required:
+                  - system
+                  - code
+                  - display
                 properties:
                   system:
                     type: string
@@ -535,6 +610,8 @@ components:
                     example: Body temperature
         subject:
           type: object
+          required:
+            - reference
           properties:
             reference:
               type: string
@@ -594,6 +671,11 @@ components:
     Encounter:
       type: object
       description: A FHIR Encounter resource
+      required:
+        - id
+        - status
+        - subject
+        - class
       properties:
         resourceType:
           type: string
@@ -617,6 +699,10 @@ components:
           example: in-progress
         class:
           type: object
+          required:
+            - system
+            - code
+            - display
           properties:
             system:
               type: string
@@ -629,6 +715,8 @@ components:
               example: ambulatory
         subject:
           type: object
+          required:
+            - reference
           properties:
             reference:
               type: string
@@ -644,6 +732,17 @@ components:
               type: string
               format: date-time
               example: 2024-01-22T10:00:00Z
+        location:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: object
+                properties:
+                  reference:
+                    type: string
+                    example: Location/1
     EncounterBundle:
       type: object
       description: A FHIR Bundle resource containing Encounter resources
@@ -679,6 +778,11 @@ components:
     Condition:
       type: object
       description: A FHIR Condition resource
+      required:
+        - id
+        - subject
+        - code
+        - clinicalStatus
       properties:
         resourceType:
           type: string
@@ -689,11 +793,17 @@ components:
           example: string
         clinicalStatus:
           type: object
+          required:
+            - coding
           properties:
             coding:
               type: array
               items:
                 type: object
+                required:
+                  - system
+                  - code
+                  - display
                 properties:
                   system:
                     type: string
@@ -723,23 +833,31 @@ components:
                     example: Confirmed
         code:
           type: object
+          required:
+            - coding
           properties:
             coding:
               type: array
               items:
                 type: object
+                required:
+                  - system
+                  - code
+                  - display
                 properties:
                   system:
                     type: string
                     example: "http://snomed.info/sct"
                   code:
                     type: string
-                    example: "233604007"
+                    example: 233604007
                   display:
                     type: string
                     example: "Finding of pneumonia (finding)"
         subject:
           type: object
+          required:
+            - reference
           properties:
             reference:
               type: string
@@ -783,6 +901,9 @@ components:
     Medication:
       type: object
       description: A FHIR Medication resource
+      required:
+        - id
+        - code
       properties:
         resourceType:
           type: string
@@ -793,18 +914,24 @@ components:
           example: string
         code:
           type: object
+          required:
+            - coding
           properties:
             coding:
               type: array
               items:
                 type: object
+                required:
+                  - system
+                  - code
+                  - display
                 properties:
                   system:
                     type: string
                     example: "http://www.nlm.nih.gov/research/umls/rxnorm"
                   code:
                     type: string
-                    example: "1191"
+                    example: 1191
                   display:
                     type: string
                     example: Amoxicillin
@@ -815,6 +942,23 @@ components:
             - inactive
             - entered-in-error
           example: active
+        form:
+          type: object
+          properties:
+            coding:
+              type: array
+              items:
+                type: object
+                properties:
+                  system:
+                    type: string
+                    example: "http://snomed.info/sct"
+                  code:
+                    type: string
+                    example: "385219002"
+                  display:
+                    type: string
+                    example: Oral dose form
     MedicationBundle:
       type: object
       description: A FHIR Bundle resource containing Medication resources
@@ -847,3 +991,23 @@ components:
             properties:
               resource:
                 $ref: '#/components/schemas/Medication'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            patient/Patient.read: Read access to Patient resources
+            patient/Patient.write: Write access to Patient resources
+            patient/Observation.read: Read access to Observation resources
+            patient/Observation.write: Write access to Observation resources
+            patient/Encounter.read: Read access to Encounter resources
+            patient/Encounter.write: Write access to Encounter resources
+            patient/Condition.read: Read access to Condition resources
+            patient/Condition.write: Write access to Condition resources
+            patient/Medication.read: Read access to Medication resources
+            patient/Medication.write: Write access to Medication resources
+security:
+  - OAuth2: []
