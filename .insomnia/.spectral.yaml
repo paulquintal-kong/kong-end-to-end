@@ -1,0 +1,407 @@
+extends: spectral:oas
+rules:
+  # ====================
+  # General FHIR Resource Rules
+  # ====================
+  
+  fhir-resource-id-required:
+    description: All FHIR resources must have a unique identifier
+    severity: error
+    given: $.paths..responses..content.application/fhir+json.schema
+    then:
+      - field: properties.id
+        function: truthy
+    message: FHIR resource must include an 'id' property
+
+  fhir-resource-meta-required:
+    description: Resources should include metadata for versioning and audit
+    severity: warn
+    given: $.paths..responses..content.application/fhir+json.schema
+    then:
+      - field: properties.meta
+        function: truthy
+    message: FHIR resource should include 'meta' property for versioning and audit trail
+
+  # ====================
+  # Patient Resource Business Rules
+  # ====================
+  
+  patient-identifier-required:
+    description: Patient must have at least one identifier (MRN, SSN, or other)
+    severity: error
+    given: $.paths[?(@property.match(/Patient/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: identifier
+    message: Patient resource must include at least one identifier (e.g., MRN, national ID)
+
+  patient-name-required:
+    description: Patient must have a name
+    severity: error
+    given: $.paths[?(@property.match(/Patient/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: name
+    message: Patient resource must include a name
+
+  patient-contact-info-required:
+    description: Patient should have contact information (phone or email)
+    severity: warn
+    given: $.paths[?(@property.match(/Patient/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: telecom
+        function: truthy
+    message: Patient should include contact information (phone, email, or other telecom)
+
+  patient-gender-required:
+    description: Patient gender should be recorded for demographic analysis
+    severity: warn
+    given: $.paths[?(@property.match(/Patient/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: gender
+    message: Patient gender should be recorded for proper demographic tracking
+
+  patient-birthdate-required:
+    description: Patient birth date is required for age-based care
+    severity: error
+    given: $.paths[?(@property.match(/Patient/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: birthDate
+    message: Patient birth date is required for age verification and care protocols
+
+  # ====================
+  # Observation Resource Business Rules
+  # ====================
+  
+  observation-subject-required:
+    description: Observation must reference a patient or subject
+    severity: error
+    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: subject
+    message: Observation must be linked to a patient or subject
+
+  observation-code-required:
+    description: Observation must have a standardized code (LOINC, SNOMED, etc.)
+    severity: error
+    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: code
+    message: Observation must include a standardized code (LOINC preferred)
+
+  observation-status-required:
+    description: Observation status is required for clinical safety
+    severity: error
+    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: status
+    message: Observation status must be specified (registered, preliminary, final, amended, etc.)
+
+  observation-effective-date-required:
+    description: Observation should have an effective date or period
+    severity: warn
+    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: effectiveDateTime
+        function: truthy
+      - field: effectivePeriod
+        function: truthy
+    message: Observation should include when it was made (effectiveDateTime or effectivePeriod)
+
+  observation-performer-recommended:
+    description: Observation should identify who performed or is responsible for it
+    severity: warn
+    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: performer
+        function: truthy
+    message: Observation should identify the performer for accountability and audit
+
+  # ====================
+  # Encounter Resource Business Rules
+  # ====================
+  
+  encounter-subject-required:
+    description: Encounter must reference a patient
+    severity: error
+    given: $.paths[?(@property.match(/Encounter/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: subject
+    message: Encounter must be linked to a patient
+
+  encounter-class-required:
+    description: Encounter class is required for billing and analytics
+    severity: error
+    given: $.paths[?(@property.match(/Encounter/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: class
+    message: Encounter class must be specified (inpatient, outpatient, emergency, etc.)
+
+  encounter-period-required:
+    description: Encounter should have a period (start and end time)
+    severity: warn
+    given: $.paths[?(@property.match(/Encounter/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: period
+        function: truthy
+    message: Encounter should include a period with start time (and end time when completed)
+
+  encounter-location-recommended:
+    description: Encounter should specify location for care coordination
+    severity: info
+    given: $.paths[?(@property.match(/Encounter/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: location
+        function: truthy
+    message: Encounter should include location information for care coordination
+
+  # ====================
+  # Condition Resource Business Rules
+  # ====================
+  
+  condition-subject-required:
+    description: Condition must reference a patient
+    severity: error
+    given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: subject
+    message: Condition must be linked to a patient
+
+  condition-code-required:
+    description: Condition must have a coded diagnosis (ICD-10, SNOMED, etc.)
+    severity: error
+    given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: code
+    message: Condition must include a standardized diagnosis code (ICD-10 or SNOMED-CT)
+
+  condition-clinical-status-required:
+    description: Condition clinical status is required for active problem list
+    severity: error
+    given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: clinicalStatus
+    message: Condition must specify clinical status (active, recurrence, relapse, inactive, remission, resolved)
+
+  condition-onset-recommended:
+    description: Condition should have onset information
+    severity: warn
+    given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: onsetDateTime
+        function: truthy
+      - field: onsetAge
+        function: truthy
+      - field: onsetPeriod
+        function: truthy
+    message: Condition should include onset information (when it started)
+
+  # ====================
+  # Medication Resource Business Rules
+  # ====================
+  
+  medication-code-required:
+    description: Medication must have a standardized code (RxNorm, NDC, etc.)
+    severity: error
+    given: $.paths[?(@property.match(/Medication(?!Request)/i))]..requestBody.content.application/fhir+json.schema
+    then:
+      - field: required
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              const: code
+    message: Medication must include a standardized code (RxNorm preferred)
+
+  medication-form-recommended:
+    description: Medication form should be specified for proper administration
+    severity: warn
+    given: $.paths[?(@property.match(/Medication(?!Request)/i))]..requestBody.content.application/fhir+json.schema.properties
+    then:
+      - field: form
+        function: truthy
+    message: Medication should specify form (tablet, capsule, injection, etc.)
+
+  # ====================
+  # Security & Privacy Rules
+  # ====================
+  
+  api-security-defined:
+    description: All FHIR endpoints must have security requirements defined
+    severity: error
+    given: $.paths[*][*]
+    then:
+      - field: security
+        function: truthy
+    message: All API operations must define security requirements (OAuth2, API Key, etc.)
+
+  sensitive-data-encryption:
+    description: Endpoints handling sensitive data should use HTTPS only
+    severity: error
+    given: $.servers[*]
+    then:
+      - field: url
+        function: pattern
+        functionOptions:
+          match: "^https://"
+    message: Server URLs must use HTTPS for patient data protection
+
+  # ====================
+  # Data Quality Rules
+  # ====================
+  
+  required-search-parameters:
+    description: Resource search operations should support common search parameters
+    severity: warn
+    given: $.paths[?(@property.match(/\/(Patient|Observation|Condition|Encounter|Medication)/))].get.parameters
+    then:
+      - function: schema
+        functionOptions:
+          schema:
+            type: array
+            minItems: 2
+    message: Resource search should support multiple search parameters for flexibility
+
+  pagination-support-required:
+    description: Search operations should support pagination
+    severity: error
+    given: $.paths[*].get.parameters[?(@.name == '_count' || @.name == '_offset')]
+    then:
+      - function: truthy
+    message: Search operations should support _count and _offset for pagination
+
+  # ====================
+  # Interoperability Rules
+  # ====================
+  
+  standard-http-status-codes:
+    description: Use standard HTTP status codes for FHIR operations
+    severity: error
+    given: $.paths[*][*].responses
+    then:
+      - field: "200"
+        function: truthy
+      - field: "400"
+        function: truthy
+      - field: "404"
+        function: truthy
+    message: API should define standard response codes (200, 400, 404, 500)
+
+  fhir-json-content-type:
+    description: FHIR APIs should support application/fhir+json
+    severity: error
+    given: $.paths..responses..content
+    then:
+      - field: application/fhir+json
+        function: truthy
+    message: FHIR responses must support 'application/fhir+json' content type
+
+  # ====================
+  # Performance & Scalability
+  # ====================
+  
+  response-size-limits:
+    description: Search results should have default limits to prevent large responses
+    severity: warn
+    given: $.paths[*].get.parameters[?(@.name == '_count')]
+    then:
+      - field: schema.default
+        function: defined
+      - field: schema.maximum
+        function: defined
+    message: _count parameter should have default and maximum values to control response size
+
+  # ====================
+  # Audit & Compliance
+  # ====================
+  
+  operation-descriptions-required:
+    description: All operations must have descriptions for audit and documentation
+    severity: warn
+    given: $.paths[*][*]
+    then:
+      - field: description
+        function: truthy
+      - field: summary
+        function: truthy
+    message: API operations should include description and summary for compliance documentation
+
+  operation-ids-required:
+    description: All operations must have unique operation IDs for tracking
+    severity: error
+    given: $.paths[*][*]
+    then:
+      - field: operationId
+        function: truthy
+    message: Each operation must have a unique operationId for audit logging and tracking
