@@ -12,7 +12,6 @@ servers:
 
 tags:
   - name: Patient
-    description: Operations related to Patient resources
   - name: Observation
     description: Operations related to Observation resources
   - name: Encounter
@@ -26,6 +25,7 @@ paths:
   /Patient:
     get:
       summary: Search for Patient resources
+      description: Returns a bundle of Patient resources based on search criteria.
       operationId: searchPatient
       tags:
         - Patient
