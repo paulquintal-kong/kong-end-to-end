@@ -1,5 +1,14 @@
 extends: spectral:oas
 rules:
+
+  tag-description:
+    description: Tags must have a description.
+    given: $.tags[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+
   # ====================
   # General FHIR Resource Rules
   # ====================
