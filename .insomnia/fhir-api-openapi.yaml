@@ -6,8 +6,11 @@ info:
     
     **Note:** This specification provides a basic structure and may need to be extended with Smile CDR specific profiles and extensions for full compatibility.
   version: '1.0.1'
+  contact:
+    name: API Support
+    email: api-support@konghq.com
 servers:
-  - url: https://hapi.fhir.org/baseR4
+  - url: http://localhost:8080/fhir
     description: Smile CDR FHIR Server (R4)
 
 tags:
@@ -930,7 +933,7 @@ components:
                     example: "http://snomed.info/sct"
                   code:
                     type: string
-                    example: 233604007
+                    example: "233604007"
                   display:
                     type: string
                     example: "Finding of pneumonia (finding)"
@@ -1011,7 +1014,7 @@ components:
                     example: "http://www.nlm.nih.gov/research/umls/rxnorm"
                   code:
                     type: string
-                    example: 1191
+                    example: "1191"
                   display:
                     type: string
                     example: Amoxicillin
