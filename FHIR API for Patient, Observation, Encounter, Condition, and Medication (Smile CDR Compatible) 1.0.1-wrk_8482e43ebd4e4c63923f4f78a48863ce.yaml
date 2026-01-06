@@ -7,6 +7,473 @@ meta:
   created: 1767666825782
   modified: 1767666825782
   description: ""
+collection:
+  - name: Patient
+    meta:
+      id: fld_cc322f5edbc4462ab89bb47875e166bc
+      created: 1767667333331
+      modified: 1767667333331
+      sortKey: -1767667333331
+      description: Operations related to Patient resources
+    children:
+      - url: "{{ _.base_url }}/Patient"
+        name: Search for Patient resources
+        meta:
+          id: req_d6a0d4ea102147cbb28a511f074841f0
+          created: 1767667333333
+          modified: 1767667333333
+          isPrivate: false
+          description: Returns a bundle of Patient resources based on search criteria.
+          sortKey: -1767667333333
+        method: GET
+        parameters:
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient"
+        name: Create a new Patient resource
+        meta:
+          id: req_4603bec9fc0c4bfe87ff9923b788c34f
+          created: 1767667333334
+          modified: 1767667333334
+          isPrivate: false
+          description: Creates a new Patient resource.
+          sortKey: -1767667333334
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient/{% prompt 'id', 'Patient ID', '1000', '', false,
+          true %}"
+        name: Retrieve a Patient resource by ID
+        meta:
+          id: req_e15eca211372433bba5f1913eba37271
+          created: 1767667333334
+          modified: 1767667453155
+          isPrivate: false
+          description: Returns a specific Patient resource based on its ID.
+          sortKey: -1767667333334
+        method: GET
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Encounter
+    meta:
+      id: fld_03bb1925f522455689bcc97a52961958
+      created: 1767667333332
+      modified: 1767667333332
+      sortKey: -1767667333332
+      description: Operations related to Encounter resources
+    children:
+      - url: "{{ _.base_url }}/Encounter/{{ _.id }}"
+        name: Retrieve an Encounter resource by ID
+        meta:
+          id: req_8167bd31f8824adab60cd6860d79265c
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Returns a specific Encounter resource based on its ID.
+          sortKey: -1767667333335
+        method: GET
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter"
+        name: Search for Encounter resources
+        meta:
+          id: req_9b08816db2cb4493aa013c4ca7ad6fa4
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Returns a bundle of Encounter resources based on search criteria.
+          sortKey: -1767667333335
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter"
+        name: Create a new Encounter resource
+        meta:
+          id: req_c9db6589222f436d8e58409fe3caa063
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Creates a new Encounter resource.
+          sortKey: -1767667333335
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Observation
+    meta:
+      id: fld_3f7a074742574843a176c780d21d60f7
+      created: 1767667333332
+      modified: 1767667333332
+      sortKey: -1767667333332
+      description: Operations related to Observation resources
+    children:
+      - url: "{{ _.base_url }}/Observation"
+        name: Search for Observation resources
+        meta:
+          id: req_04c7d9227d2b49dbb66bf548d8dbb783
+          created: 1767667333334
+          modified: 1767667333334
+          isPrivate: false
+          description: Returns a bundle of Observation resources based on search criteria.
+          sortKey: -1767667333334
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation/{{ _.id }}"
+        name: Retrieve an Observation resource by ID
+        meta:
+          id: req_2353e4b45cc94225933c466ccbadba8b
+          created: 1767667333334
+          modified: 1767667333334
+          isPrivate: false
+          description: Returns a specific Observation resource based on its ID.
+          sortKey: -1767667333334
+        method: GET
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation"
+        name: Create a new Observation resource
+        meta:
+          id: req_f956fa0d2b6e42c282f19087665cf00c
+          created: 1767667333334
+          modified: 1767667333334
+          isPrivate: false
+          description: Creates a new Observation resource.
+          sortKey: -1767667333334
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Medication
+    meta:
+      id: fld_49e50859995642a59d64bb188fb1c8d8
+      created: 1767667333332
+      modified: 1767667333332
+      sortKey: -1767667333332
+      description: Operations related to Medication resources
+    children:
+      - url: "{{ _.base_url }}/Medication/{{ _.id }}"
+        name: Retrieve a Medication resource by ID
+        meta:
+          id: req_5d4a948606ed4ff5870699215eb3e184
+          created: 1767667333336
+          modified: 1767667333336
+          isPrivate: false
+          description: Returns a specific Medication resource based on its ID.
+          sortKey: -1767667333336
+        method: GET
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication"
+        name: Search for Medication resources
+        meta:
+          id: req_9071c79390ef46c182e270c811c3127c
+          created: 1767667333336
+          modified: 1767667333336
+          isPrivate: false
+          description: Returns a bundle of Medication resources based on search criteria.
+          sortKey: -1767667333336
+        method: GET
+        parameters:
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication"
+        name: Create a new Medication resource
+        meta:
+          id: req_e3f24bdc6f8a41bd9662daa0e95d6bc8
+          created: 1767667333336
+          modified: 1767667333336
+          isPrivate: false
+          description: Creates a new Medication resource.
+          sortKey: -1767667333336
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Condition
+    meta:
+      id: fld_88b6994b8eca4f8593e3ddd90a604e36
+      created: 1767667333332
+      modified: 1767667333332
+      sortKey: -1767667333332
+      description: Operations related to Condition resources
+    children:
+      - url: "{{ _.base_url }}/Condition"
+        name: Create a new Condition resource
+        meta:
+          id: req_800d71376025485caba82e892747f566
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Creates a new Condition resource.
+          sortKey: -1767667333335
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition/{{ _.id }}"
+        name: Retrieve a Condition resource by ID
+        meta:
+          id: req_dc1acb0495ba4676b1034d3226c2c16d
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Returns a specific Condition resource based on its ID.
+          sortKey: -1767667333335
+        method: GET
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition"
+        name: Search for Condition resources
+        meta:
+          id: req_e99d74bd4a9544a28b59d7f8aaa2c81a
+          created: 1767667333335
+          modified: 1767667333335
+          isPrivate: false
+          description: Returns a bundle of Condition resources based on search criteria.
+          sortKey: -1767667333335
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: apikey
+          key: X-API-Key
+          value: "{{ _.xApiKey }}"
+          addTo: header
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
 cookieJar:
   name: Default Jar
   meta:
@@ -18,8 +485,26 @@ environments:
   meta:
     id: env_f793916b891c7e40072f75c1b95828afa3a7b74c
     created: 1767666825785
-    modified: 1767666825785
+    modified: 1767667333330
     isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
+  subEnvironments:
+    - name: OpenAPI env localhost:8080
+      meta:
+        id: env_b0d1e2d07f0549a68c494c0bb9c49670
+        created: 1767667333331
+        modified: 1767667333331
+        isPrivate: false
+        sortKey: 1767667333331
+      data:
+        scheme: http
+        base_path: /fhir
+        host: localhost:8080
+        xApiKey: xApiKey
+        oauth2ClientId: clientId
+        oauth2RedirectUrl: http://localhost/
+        oauth2ClientSecret: clientSecret
 spec:
   contents:
     openapi: 3.1.0
@@ -1111,4 +1596,4 @@ spec:
   meta:
     id: spc_19a9d3c01abb47448ed9cb899f8a8b35
     created: 1767666825784
-    modified: 1767666825784
+    modified: 1767667229911
