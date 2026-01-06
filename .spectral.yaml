@@ -355,23 +355,23 @@ rules:
   # ====================
   
   standard-http-status-codes:
-  description: Use standard HTTP status codes for FHIR operations
-  severity: error
-  given: $.paths[*][*].responses
-  then:
-    function: schema
-    functionOptions:
-      schema:
-        type: object
-        # 1. These codes are ALWAYS required
-        required:
-          - "400"
-          - "404"
-        # 2. At least one of these schemas must match (Logic: 200 OR 201)
-        anyOf:
-          - required: ["200"]
-          - required: ["201"]
-  message: "API must define standard response codes: (200 OR 201) AND (400, 404)."
+    description: Use standard HTTP status codes for FHIR operations
+    severity: error
+    given: $.paths[*][*].responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          # 1. These codes are ALWAYS required
+          required:
+            - "400"
+            - "404"
+          # 2. At least one of these schemas must match (Logic: 200 OR 201)
+          anyOf:
+            - required: ["200"]
+            - required: ["201"]
+    message: "API must define standard response codes: (200 OR 201) AND (400, 404)."
 
   fhir-json-content-type:
     description: FHIR APIs should support application/fhir+json
