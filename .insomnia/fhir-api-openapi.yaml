@@ -30,6 +30,10 @@ paths:
       operationId: searchPatient
       tags:
         - Patient
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Patient.read
       parameters:
         - name: _count
           in: query
@@ -63,6 +67,10 @@ paths:
       operationId: createPatient
       tags:
         - Patient
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Patient.write
       requestBody:
         description: The Patient resource to create.
         required: true
@@ -79,6 +87,8 @@ paths:
                 $ref: '#/components/schemas/Patient'
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
   /Patient/{id}:
     get:
       summary: Retrieve a Patient resource by ID
@@ -86,6 +96,10 @@ paths:
       operationId: getPatientById
       tags:
         - Patient
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Patient.read
       parameters:
         - name: id
           in: path
@@ -100,6 +114,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Patient'
+        '400':
+          description: Bad Request
         '404':
           description: Patient resource not found
   /Observation:
@@ -109,6 +125,10 @@ paths:
       operationId: searchObservation
       tags:
         - Observation
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Observation.read
       parameters:
         - name: patient
           in: query
@@ -152,6 +172,10 @@ paths:
       operationId: createObservation
       tags:
         - Observation
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Observation.write
       requestBody:
         description: The Observation resource to create.
         required: true
@@ -168,6 +192,8 @@ paths:
                 $ref: '#/components/schemas/Observation'
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
   /Observation/{id}:
     get:
       summary: Retrieve an Observation resource by ID
@@ -175,6 +201,10 @@ paths:
       operationId: getObservationById
       tags:
         - Observation
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Observation.read
       parameters:
         - name: id
           in: path
@@ -189,6 +219,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Observation'
+        '400':
+          description: Bad Request
         '404':
           description: Observation resource not found
   /Encounter:
@@ -198,6 +230,10 @@ paths:
       operationId: searchEncounter
       tags:
         - Encounter
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Encounter.read
       parameters:
         - name: patient
           in: query
@@ -236,6 +272,10 @@ paths:
       operationId: createEncounter
       tags:
         - Encounter
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Encounter.write
       requestBody:
         description: The Encounter resource to create.
         required: true
@@ -252,6 +292,8 @@ paths:
                 $ref: '#/components/schemas/Encounter'
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
   /Encounter/{id}:
     get:
       summary: Retrieve an Encounter resource by ID
@@ -259,6 +301,10 @@ paths:
       operationId: getEncounterById
       tags:
         - Encounter
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Encounter.read
       parameters:
         - name: id
           in: path
@@ -273,6 +319,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Encounter'
+        '400':
+          description: Bad Request
         '404':
           description: Encounter resource not found
   /Condition:
@@ -282,6 +330,10 @@ paths:
       operationId: searchCondition
       tags:
         - Condition
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Condition.read
       parameters:
         - name: patient
           in: query
@@ -320,6 +372,10 @@ paths:
       operationId: createCondition
       tags:
         - Condition
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Condition.write
       requestBody:
         description: The Condition resource to create.
         required: true
@@ -336,6 +392,8 @@ paths:
                 $ref: '#/components/schemas/Condition'
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
   /Condition/{id}:
     get:
       summary: Retrieve a Condition resource by ID
@@ -343,6 +401,10 @@ paths:
       operationId: getConditionById
       tags:
         - Condition
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Condition.read
       parameters:
         - name: id
           in: path
@@ -357,6 +419,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Condition'
+        '400':
+          description: Bad Request
         '404':
           description: Condition resource not found
   /Medication:
@@ -366,6 +430,10 @@ paths:
       operationId: searchMedication
       tags:
         - Medication
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Medication.read
       parameters:
         - name: code
           in: query
@@ -404,6 +472,10 @@ paths:
       operationId: createMedication
       tags:
         - Medication
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Medication.write
       requestBody:
         description: The Medication resource to create.
         required: true
@@ -420,6 +492,8 @@ paths:
                 $ref: '#/components/schemas/Medication'
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
   /Medication/{id}:
     get:
       summary: Retrieve a Medication resource by ID
@@ -427,6 +501,10 @@ paths:
       operationId: getMedicationById
       tags:
         - Medication
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+          - patient/Medication.read
       parameters:
         - name: id
           in: path
@@ -441,6 +519,8 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/Medication'
+        '400':
+          description: Bad Request
         '404':
           description: Medication resource not found
 
@@ -992,6 +1072,11 @@ components:
               resource:
                 $ref: '#/components/schemas/Medication'
   securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key for authentication
     OAuth2:
       type: oauth2
       flows:
@@ -1010,4 +1095,5 @@ components:
             patient/Medication.read: Read access to Medication resources
             patient/Medication.write: Write access to Medication resources
 security:
+  - ApiKeyAuth: []
   - OAuth2: []
