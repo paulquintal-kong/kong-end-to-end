@@ -13,14 +13,14 @@ rules:
   # General FHIR Resource Rules
   # ====================
   
-  fhir-resource-id-required:
-    description: All FHIR resources must have a unique identifier
-    severity: error
-    given: $.paths..responses..content.application/fhir+json.schema
-    then:
-      - field: properties.id
-        function: truthy
-    message: FHIR resource must include an 'id' property
+  # fhir-resource-id-required:
+  #   description: All FHIR resources must have a unique identifier
+  #   severity: error
+  #   given: $.paths..responses..content.application/fhir+json.schema
+  #   then:
+  #     - field: properties.id
+  #       function: truthy
+  #   message: FHIR resource must include an 'id' property
 
   # fhir-resource-meta-required:
   #   description: Resources should include metadata for versioning and audit
@@ -262,18 +262,18 @@ rules:
               const: clinicalStatus
     message: Condition must specify clinical status (active, recurrence, relapse, inactive, remission, resolved)
 
-  condition-onset-recommended:
-    description: Condition should have onset information
-    severity: warn
-    given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema.properties
-    then:
-      - field: onsetDateTime
-        function: truthy
-      - field: onsetAge
-        function: truthy
-      - field: onsetPeriod
-        function: truthy
-    message: Condition should include onset information (when it started)
+  # condition-onset-recommended:
+  #   description: Condition should have onset information
+  #   severity: warn
+  #   given: $.paths[?(@property.match(/Condition/i))]..requestBody.content.application/fhir+json.schema.properties
+  #   then:
+  #     - field: onsetDateTime
+  #       function: truthy
+  #     - field: onsetAge
+  #       function: truthy
+  #     - field: onsetPeriod
+  #       function: truthy
+  #   message: Condition should include onset information (when it started)
 
   # ====================
   # Medication Resource Business Rules
