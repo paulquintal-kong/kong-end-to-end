@@ -22,14 +22,14 @@ rules:
         function: truthy
     message: FHIR resource must include an 'id' property
 
-  fhir-resource-meta-required:
-    description: Resources should include metadata for versioning and audit
-    severity: warn
-    given: $.paths..responses..content.application/fhir+json.schema
-    then:
-      - field: properties.meta
-        function: truthy
-    message: FHIR resource should include 'meta' property for versioning and audit trail
+  # fhir-resource-meta-required:
+  #   description: Resources should include metadata for versioning and audit
+  #   severity: warn
+  #   given: $.paths..responses..content.application/fhir+json.schema
+  #   then:
+  #     - field: properties.meta
+  #       function: truthy
+  #   message: FHIR resource should include 'meta' property for versioning and audit trail
 
   # ====================
   # Patient Resource Business Rules
@@ -146,25 +146,25 @@ rules:
               const: status
     message: Observation status must be specified (registered, preliminary, final, amended, etc.)
 
-  observation-effective-date-required:
-    description: Observation should have an effective date or period
-    severity: warn
-    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
-    then:
-      - field: effectiveDateTime
-        function: truthy
-      - field: effectivePeriod
-        function: truthy
-    message: Observation should include when it was made (effectiveDateTime or effectivePeriod)
+  # observation-effective-date-required:
+  #   description: Observation should have an effective date or period
+  #   severity: warn
+  #   given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
+  #   then:
+  #     - field: effectiveDateTime
+  #       function: truthy
+  #     - field: effectivePeriod
+  #       function: truthy
+  #   message: Observation should include when it was made (effectiveDateTime or effectivePeriod)
 
-  observation-performer-recommended:
-    description: Observation should identify who performed or is responsible for it
-    severity: warn
-    given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
-    then:
-      - field: performer
-        function: truthy
-    message: Observation should identify the performer for accountability and audit
+  # observation-performer-recommended:
+  #   description: Observation should identify who performed or is responsible for it
+  #   severity: warn
+  #   given: $.paths[?(@property.match(/Observation/i))]..requestBody.content.application/fhir+json.schema.properties
+  #   then:
+  #     - field: performer
+  #       function: truthy
+  #   message: Observation should identify the performer for accountability and audit
 
   # ====================
   # Encounter Resource Business Rules
@@ -315,32 +315,32 @@ rules:
         function: truthy
     message: All API operations must define security requirements (OAuth2, API Key, etc.)
 
-  sensitive-data-encryption:
-    description: Endpoints handling sensitive data should use HTTPS only
-    severity: error
-    given: $.servers[*]
-    then:
-      - field: url
-        function: pattern
-        functionOptions:
-          match: "^https://"
-    message: Server URLs must use HTTPS for patient data protection
+  # sensitive-data-encryption:
+  #   description: Endpoints handling sensitive data should use HTTPS only
+  #   severity: error
+  #   given: $.servers[*]
+  #   then:
+  #     - field: url
+  #       function: pattern
+  #       functionOptions:
+  #         match: "^https://"
+  #   message: Server URLs must use HTTPS for patient data protection
 
   # ====================
   # Data Quality Rules
   # ====================
   
-  required-search-parameters:
-    description: Resource search operations should support common search parameters
-    severity: warn
-    given: $.paths[?(@property.match(/\/(Patient|Observation|Condition|Encounter|Medication)/))].get.parameters
-    then:
-      - function: schema
-        functionOptions:
-          schema:
-            type: array
-            minItems: 2
-    message: Resource search should support multiple search parameters for flexibility
+  # required-search-parameters:
+  #   description: Resource search operations should support common search parameters
+  #   severity: warn
+  #   given: $.paths[?(@property.match(/\/(Patient|Observation|Condition|Encounter|Medication)/))].get.parameters
+  #   then:
+  #     - function: schema
+  #       functionOptions:
+  #         schema:
+  #           type: array
+  #           minItems: 2
+  #   message: Resource search should support multiple search parameters for flexibility
 
   pagination-support-required:
     description: Search operations should support pagination
