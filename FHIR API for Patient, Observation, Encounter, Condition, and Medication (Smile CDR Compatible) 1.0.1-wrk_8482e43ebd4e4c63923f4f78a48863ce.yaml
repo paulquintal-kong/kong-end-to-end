@@ -20,6 +20,9 @@ environments:
     created: 1767666825785
     modified: 1767666825785
     isPrivate: false
+  data:
+    base_url: http://localhost:8080/fhir
+    patient_id: ""
 spec:
   contents:
     openapi: 3.1.0
@@ -1112,3 +1115,139 @@ spec:
     id: spc_19a9d3c01abb47448ed9cb899f8a8b35
     created: 1767666825784
     modified: 1767666825784
+requests:
+  - name: Search Patients
+    meta:
+      id: req_search_patients
+      created: 1767666825800
+      modified: 1767666825800
+      parentId: wrk_8482e43ebd4e4c63923f4f78a48863ce
+    method: GET
+    url: "{{ _.base_url }}/Patient"
+    parameters:
+      - name: _count
+        value: "10"
+      - name: _offset
+        value: "0"
+    headers:
+      - name: Accept
+        value: application/fhir+json
+    authentication: {}
+    body: {}
+    tests: |
+      const response = await insomnia.send();
+      
+      // Test 1: Verify status code is 200
+      insomnia.test('Status code is 200', () => {
+        insomnia.expect(response.status).to.equal(200);
+      });
+      
+      // Test 2: Verify response is valid FHIR Bundle
+      insomnia.test('Response is a valid FHIR Bundle', () => {
+        const body = JSON.parse(response.body);
+        insomnia.expect(body.resourceType).to.equal('Bundle');
+        insomnia.expect(body.type).to.equal('searchset');
+      });
+      
+      // Test 3: Verify pagination parameters are respected
+      insomnia.test('Bundle respects pagination limits', () => {
+        const body = JSON.parse(response.body);
+        if (body.entry) {
+          insomnia.expect(body.entry.length).to.be.at.most(10);
+        }
+      });
+  - name: Create Patient
+    meta:
+      id: req_create_patient
+      created: 1767666825801
+      modified: 1767666825801
+      parentId: wrk_8482e43ebd4e4c63923f4f78a48863ce
+    method: POST
+    url: "{{ _.base_url }}/Patient"
+    headers:
+      - name: Content-Type
+        value: application/fhir+json
+      - name: Accept
+        value: application/fhir+json
+    authentication: {}
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "resourceType": "Patient",
+          "name": [{
+            "use": "official",
+            "family": "TestPatient",
+            "given": ["John", "Q"]
+          }],
+          "gender": "male",
+          "birthDate": "1980-01-15",
+          "identifier": [{
+            "system": "urn:oid:1.2.36.146.595.217.0.1",
+            "value": "MRN-{{ $timestamp }}"
+          }],
+          "telecom": [{
+            "system": "phone",
+            "value": "555-0123",
+            "use": "home"
+          }]
+        }
+    tests: |
+      const response = await insomnia.send();
+      
+      // Test 1: Verify status code is 201 Created
+      insomnia.test('Status code is 201 Created', () => {
+        insomnia.expect(response.status).to.equal(201);
+      });
+      
+      // Test 2: Verify created patient has an ID
+      insomnia.test('Created patient has an ID assigned', () => {
+        const body = JSON.parse(response.body);
+        insomnia.expect(body.id).to.exist;
+        insomnia.expect(body.id).to.be.a('string');
+        // Store patient ID for later use
+        insomnia.environment.set('patient_id', body.id);
+      });
+      
+      // Test 3: Verify patient data matches request
+      insomnia.test('Patient data matches request', () => {
+        const body = JSON.parse(response.body);
+        insomnia.expect(body.resourceType).to.equal('Patient');
+        insomnia.expect(body.name[0].family).to.equal('TestPatient');
+        insomnia.expect(body.gender).to.equal('male');
+      });
+  - name: Get Patient by ID
+    meta:
+      id: req_get_patient
+      created: 1767666825802
+      modified: 1767666825802
+      parentId: wrk_8482e43ebd4e4c63923f4f78a48863ce
+    method: GET
+    url: "{{ _.base_url }}/Patient/{{ _.patient_id }}"
+    headers:
+      - name: Accept
+        value: application/fhir+json
+    authentication: {}
+    body: {}
+    tests: |
+      const response = await insomnia.send();
+      
+      // Test 1: Verify successful retrieval
+      insomnia.test('Status code is 200 OK', () => {
+        insomnia.expect(response.status).to.equal(200);
+      });
+      
+      // Test 2: Verify correct patient is returned
+      insomnia.test('Correct patient ID is returned', () => {
+        const body = JSON.parse(response.body);
+        const expectedId = insomnia.environment.get('patient_id');
+        insomnia.expect(body.id).to.equal(expectedId);
+      });
+      
+      // Test 3: Verify required FHIR patient fields exist
+      insomnia.test('Patient has required FHIR fields', () => {
+        const body = JSON.parse(response.body);
+        insomnia.expect(body.resourceType).to.equal('Patient');
+        insomnia.expect(body.meta).to.exist;
+        insomnia.expect(body.name).to.be.an('array');
+      });
