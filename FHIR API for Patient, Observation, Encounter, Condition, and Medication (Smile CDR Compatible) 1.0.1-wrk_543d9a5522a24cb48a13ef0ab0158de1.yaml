@@ -3,22 +3,22 @@ schema_version: "5.1"
 name: FHIR API for Patient, Observation, Encounter, Condition, and Medication
   (Smile CDR Compatible) 1.0.1
 meta:
-  id: wrk_a0df648f6e03428ab8b4f8a3ed5d1c3b
-  created: 1767661413161
-  modified: 1767661413161
+  id: wrk_543d9a5522a24cb48a13ef0ab0158de1
+  created: 1767662371759
+  modified: 1767662371759
   description: ""
 cookieJar:
   name: Default Jar
   meta:
-    id: jar_4a3970a8f14eead25195fc92a52f2b52515987bc
-    created: 1767661421501
-    modified: 1767661421501
+    id: jar_156a7310df780c1b60033dee85a21ee38f66b6c8
+    created: 1767662376571
+    modified: 1767662376571
 environments:
   name: Base Environment
   meta:
-    id: env_4a3970a8f14eead25195fc92a52f2b52515987bc
-    created: 1767661413163
-    modified: 1767661413163
+    id: env_156a7310df780c1b60033dee85a21ee38f66b6c8
+    created: 1767662371762
+    modified: 1767662371762
     isPrivate: false
 spec:
   contents:
@@ -36,11 +36,15 @@ spec:
         be extended with Smile CDR specific profiles and extensions for full
         compatibility.
       version: 1.0.1
+      contact:
+        name: API Support
+        email: api-support@konghq.com
     servers:
-      - url: https://hapi.fhir.org/baseR4
+      - url: http://localhost:8080/fhir
         description: Smile CDR FHIR Server (R4)
     tags:
       - name: Patient
+        description: Operations related to Patient resources
       - name: Observation
         description: Operations related to Observation resources
       - name: Encounter
@@ -940,7 +944,7 @@ spec:
                         example: http://snomed.info/sct
                       code:
                         type: string
-                        example: 233604007
+                        example: "233604007"
                       display:
                         type: string
                         example: Finding of pneumonia (finding)
@@ -1021,7 +1025,7 @@ spec:
                         example: http://www.nlm.nih.gov/research/umls/rxnorm
                       code:
                         type: string
-                        example: 1191
+                        example: "1191"
                       display:
                         type: string
                         example: Amoxicillin
@@ -1105,6 +1109,6 @@ spec:
                 patient/Medication.read: Read access to Medication resources
                 patient/Medication.write: Write access to Medication resources
   meta:
-    id: spc_17f2eecda16e4c6e92c28ae21d805c63
-    created: 1767661413162
-    modified: 1767661462256
+    id: spc_30ed1bd36de048df8e7de3166217ddb1
+    created: 1767662371761
+    modified: 1767662371761
