@@ -183,28 +183,98 @@ jobs:
           tar -xf inso.tar.xz -C /tmp/inso
           chmod +x /tmp/inso/inso
       
-      - name: Run API Tests
+      - name: RUN API TESTS
         id: apiTests
         continue-on-error: true
         env:
           FHIR_BASE_URL: ${{ steps.check-tunnel.outputs.tunnel-url }}
         run: |
-          echo "🧪 Running FHIR API test collection against: $FHIR_BASE_URL"
+          echo "════════════════════════════════════════════════════════════"
+          echo "🧪 FHIR API TEST EXECUTION"
+          echo "════════════════════════════════════════════════════════════"
+          echo "Test Environment: $FHIR_BASE_URL"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          
           chmod +x /tmp/inso/inso
           export PATH="/tmp/inso:$PATH"
           
-          # Run tests with Insomnia CLI
+          # Create output file for test results
+          TEST_OUTPUT=$(mktemp)
+          
+          # Run tests with Insomnia CLI and capture output
+          set +e
           inso -w "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1-wrk_8482e43ebd4e4c63923f4f78a48863ce.yaml" \
             run test -e "Base Environment" \
             --ci \
-            --disableCertValidation || echo "⚠️ Some tests may have failed"
+            --disableCertValidation 2>&1 | tee "$TEST_OUTPUT"
+          TEST_EXIT_CODE=$?
+          set -e
+          
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "📊 TEST RESULTS SUMMARY"
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Parse and display test results
+          if grep -q "Tests:" "$TEST_OUTPUT"; then
+            echo ""
+            grep "Tests:" "$TEST_OUTPUT" || true
+            grep "Suites:" "$TEST_OUTPUT" || true
+            grep "Duration:" "$TEST_OUTPUT" || true
+            echo ""
+          fi
+          
+          # Show passed tests
+          echo "✅ PASSED TESTS:"
+          grep "✓" "$TEST_OUTPUT" | head -20 || echo "  No passed tests found in output"
+          echo ""
+          
+          # Show failed tests
+          if grep -q "✖" "$TEST_OUTPUT"; then
+            echo "❌ FAILED TESTS:"
+            grep "✖" "$TEST_OUTPUT" | head -20 || true
+            echo ""
+          fi
+          
+          # Show error details if any
+          if grep -qi "error\|fail" "$TEST_OUTPUT"; then
+            echo "🔍 ERROR DETAILS:"
+            grep -i "error\|fail" "$TEST_OUTPUT" | grep -v "0 failing" | head -20 || true
+            echo ""
+          fi
+          
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Clean up
+          rm -f "$TEST_OUTPUT"
+          
+          # Exit with original test exit code
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "⚠️ Some tests failed (exit code: $TEST_EXIT_CODE)"
+            exit 0  # Don't fail the step since continue-on-error is true
+          else
+            echo "✅ All tests passed!"
+          fi
       
       - name: Generate test report
         if: always()
         run: |
-          echo "📊 Test execution completed"
-          echo "Test Result: ${{ steps.apiTests.outcome }}"
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "📋 TEST EXECUTION REPORT"
+          echo "════════════════════════════════════════════════════════════"
+          echo "Overall Status: ${{ steps.apiTests.outcome }}"
           echo "Test Environment: ${{ steps.check-tunnel.outputs.tunnel-url }}"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          
+          if [ "${{ steps.apiTests.outcome }}" == "success" ]; then
+            echo "✅ All API tests completed successfully"
+          else
+            echo "⚠️ Some tests failed or had issues - check logs above"
+          fi
       
       - name: Upload test results
         if: always()
@@ -231,10 +301,24 @@ jobs:
           echo "- OpenAPI Spec Linting: ${{ needs.governance.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## API Testing" >> $GITHUB_STEP_SUMMARY
-          echo "- Test Collection Execution: ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Collection Execution: ${{ needs.test.result == 'success' && '✅ Passed' || '⚠️ Failed/Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Outcome: \`${{ needs.test.outputs.test-result }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add recommendations based on test results
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "### ⚠️ Action Required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Tests did not complete successfully. Please:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check the test execution logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+            echo "2. Verify your local FHIR server is running with ngrok tunnel" >> $GITHUB_STEP_SUMMARY
+            echo "3. Ensure \`.ngrok-url.txt\` is up to date in the repository" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           echo "### Details" >> $GITHUB_STEP_SUMMARY
           echo "- Workflow: \`${{ github.workflow }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Triggered by: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
