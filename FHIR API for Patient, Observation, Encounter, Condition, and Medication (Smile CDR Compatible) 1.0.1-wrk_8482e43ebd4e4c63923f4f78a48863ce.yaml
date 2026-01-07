@@ -671,9 +671,9 @@ environments:
         isPrivate: false
         sortKey: 1767670610173
       data:
-        scheme: http
+        scheme: https
         base_path: /fhir
-        host: localhost:8080
+        host: asia-bosker-renna.ngrok-free.dev
         xApiKey: xApiKey
         oauth2ClientId: clientId
         oauth2RedirectUrl: http://localhost/
@@ -687,9 +687,9 @@ environments:
         isPrivate: false
         sortKey: 1767816359228
       data:
-        scheme: http
+        scheme: https
         base_path: /fhir
-        host: localhost:8080
+        host: asia-bosker-renna.ngrok-free.dev
         xApiKey: xApiKey
         oauth2ClientId: clientId
         oauth2RedirectUrl: http://localhost/
