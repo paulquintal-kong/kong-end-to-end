@@ -679,6 +679,22 @@ environments:
         oauth2RedirectUrl: http://localhost/
         oauth2ClientSecret: clientSecret
         id: "1013"
+    - name: Dev
+      meta:
+        id: env_5c5e0b86e3e9472b99bc84b41278609e
+        created: 1767816359228
+        modified: 1767816406512
+        isPrivate: false
+        sortKey: 1767816359228
+      data:
+        scheme: http
+        base_path: /fhir
+        host: localhost:8080
+        xApiKey: xApiKey
+        oauth2ClientId: clientId
+        oauth2RedirectUrl: http://localhost/
+        oauth2ClientSecret: clientSecret
+        id: "1013"
 spec:
   contents:
     openapi: 3.1.0
