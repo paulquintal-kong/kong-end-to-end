@@ -1,1 +1,6 @@
 .DS_Store
+
+# Ngrok files
+.ngrok.log
+.ngrok.pid
+# Note: .ngrok-url.txt should be committed for CI/CD testing

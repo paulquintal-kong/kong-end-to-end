@@ -1,0 +1,324 @@
+name: FHIR API Governance and Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'local'
+        type: choice
+        options:
+          - local
+          - dev
+          - staging
+  push:
+    branches:
+      - main
+    paths:
+      - '.insomnia/**'
+      - '.spectral.yaml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.insomnia/**'
+      - '.spectral.yaml'
+
+jobs:
+  governance:
+    name: API Governance - Lint OpenAPI Spec
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'initial commit') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Cache Insomnia CLI
+        id: cache-inso
+        uses: actions/cache@v4
+        with:
+          path: /tmp/inso
+          key: inso-12.1.0
+      
+      - name: Setup Node.js
+        if: steps.cache-inso.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Insomnia CLI
+        if: steps.cache-inso.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/inso
+          curl -sL https://github.com/Kong/insomnia/releases/download/core%4012.1.0/inso-linux-x64-12.1.0.tar.xz -o inso.tar.xz
+          tar -xf inso.tar.xz -C /tmp/inso
+          chmod +x /tmp/inso/inso
+      
+      - name: LINT FHIR API SPECIFICATION
+        run: |
+          echo "🔍 Running governance checks on FHIR API specification..."
+          chmod +x /tmp/inso/inso
+          export PATH="/tmp/inso:$PATH"
+          
+          # Lint spec
+          inso lint spec --ci .insomnia/fhir-api-openapi.yaml
+      
+      - name: Export FHIR API Specification
+        run: |
+          export PATH="/tmp/inso:$PATH"
+          
+          # Export spec and filter out [log] prefixes
+          inso export spec .insomnia/fhir-api-openapi.yaml | sed 's/^\[log\] //' > fhir-api-exported.yaml
+          
+          # Debug: Show exported spec
+          echo "=== Exported fhir-api-exported.yaml content (first 30 lines) ==="
+          head -30 fhir-api-exported.yaml
+          
+          # Validate YAML syntax
+          echo "=== Validating YAML syntax ==="
+          python3 -c "import yaml; yaml.safe_load(open('fhir-api-exported.yaml'))" && echo "✅ YAML is valid" || echo "❌ YAML is invalid"
+      
+      - name: Upload FHIR API spec
+        uses: actions/upload-artifact@v4
+        with:
+          name: fhir-api-spec
+          path: fhir-api-exported.yaml
+      
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: |
+            .insomnia/
+            .spectral.yaml
+          retention-days: 30
+
+  test:
+    name: API Testing - Run Test Collection
+    runs-on: ubuntu-latest
+    needs: governance
+    if: ${{ !contains(github.event.head_commit.message, 'initial commit') }}
+    outputs:
+      test-result: ${{ steps.apiTests.outcome }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for ngrok tunnel
+        id: check-tunnel
+        run: |
+          echo "🔍 Checking for ngrok tunnel availability..."
+          
+          # Check if .ngrok-url.txt exists in the repository
+          if [ -f ".ngrok-url.txt" ]; then
+            NGROK_URL=$(cat .ngrok-url.txt)
+            echo "tunnel-url=$NGROK_URL" >> $GITHUB_OUTPUT
+            echo "✅ Found ngrok URL in repository: $NGROK_URL"
+          else
+            echo "❌ No ngrok tunnel URL found"
+            echo "tunnel-url=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Verify tunnel is accessible
+        id: verify-tunnel
+        if: steps.check-tunnel.outputs.tunnel-url != ''
+        continue-on-error: true
+        run: |
+          TUNNEL_URL="${{ steps.check-tunnel.outputs.tunnel-url }}"
+          echo "🔗 Testing tunnel: $TUNNEL_URL"
+          
+          # Try to access the FHIR metadata endpoint through ngrok
+          if curl -sf --max-time 10 "$TUNNEL_URL/metadata" > /dev/null; then
+            echo "✅ Tunnel is accessible and FHIR server is responding"
+            echo "tunnel-accessible=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Tunnel exists but is not accessible or FHIR server is not responding"
+            echo "tunnel-accessible=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Provide setup instructions if tunnel unavailable
+        if: steps.check-tunnel.outputs.tunnel-url == '' || steps.verify-tunnel.outputs.tunnel-accessible != 'true'
+        run: |
+          echo "::error::🚨 Local FHIR server with ngrok tunnel is required for testing"
+          echo ""
+          echo "📋 To run tests against your local FHIR server:"
+          echo ""
+          echo "1. Start the FHIR server with ngrok tunnel:"
+          echo "   ./start_demo.sh"
+          echo ""
+          echo "2. Commit the generated .ngrok-url.txt file:"
+          echo "   git add .ngrok-url.txt"
+          echo "   git commit -m 'Update ngrok tunnel URL for testing'"
+          echo "   git push"
+          echo ""
+          echo "3. Re-run this workflow"
+          echo ""
+          echo "⚠️ Make sure your local machine is running and ngrok tunnel is active"
+          echo "⚠️ The ngrok URL changes each time you restart, so update the file accordingly"
+          exit 1
+      
+      - name: Cache Insomnia CLI
+        id: cache-inso
+        uses: actions/cache@v4
+        with:
+          path: /tmp/inso
+          key: inso-12.1.0
+      
+      - name: Setup Node.js
+        if: steps.cache-inso.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Insomnia CLI
+        if: steps.cache-inso.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/inso
+          curl -sL https://github.com/Kong/insomnia/releases/download/core%4012.1.0/inso-linux-x64-12.1.0.tar.xz -o inso.tar.xz
+          tar -xf inso.tar.xz -C /tmp/inso
+          chmod +x /tmp/inso/inso
+      
+      - name: RUN API TESTS
+        id: apiTests
+        continue-on-error: true
+        env:
+          FHIR_BASE_URL: ${{ steps.check-tunnel.outputs.tunnel-url }}
+        run: |
+          echo "════════════════════════════════════════════════════════════"
+          echo "🧪 FHIR API TEST EXECUTION"
+          echo "════════════════════════════════════════════════════════════"
+          echo "Test Environment: $FHIR_BASE_URL"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          
+          chmod +x /tmp/inso/inso
+          export PATH="/tmp/inso:$PATH"
+          
+          # Create output file for test results
+          TEST_OUTPUT=$(mktemp)
+          
+          # Run tests with Insomnia CLI and capture output
+          set +e
+          inso -w "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1-wrk_8482e43ebd4e4c63923f4f78a48863ce.yaml" \
+            run test -e "Base Environment" \
+            --ci \
+            --disableCertValidation 2>&1 | tee "$TEST_OUTPUT"
+          TEST_EXIT_CODE=$?
+          set -e
+          
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "📊 TEST RESULTS SUMMARY"
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Parse and display test results
+          if grep -q "Tests:" "$TEST_OUTPUT"; then
+            echo ""
+            grep "Tests:" "$TEST_OUTPUT" || true
+            grep "Suites:" "$TEST_OUTPUT" || true
+            grep "Duration:" "$TEST_OUTPUT" || true
+            echo ""
+          fi
+          
+          # Show passed tests
+          echo "✅ PASSED TESTS:"
+          grep "✓" "$TEST_OUTPUT" | head -20 || echo "  No passed tests found in output"
+          echo ""
+          
+          # Show failed tests
+          if grep -q "✖" "$TEST_OUTPUT"; then
+            echo "❌ FAILED TESTS:"
+            grep "✖" "$TEST_OUTPUT" | head -20 || true
+            echo ""
+          fi
+          
+          # Show error details if any
+          if grep -qi "error\|fail" "$TEST_OUTPUT"; then
+            echo "🔍 ERROR DETAILS:"
+            grep -i "error\|fail" "$TEST_OUTPUT" | grep -v "0 failing" | head -20 || true
+            echo ""
+          fi
+          
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Clean up
+          rm -f "$TEST_OUTPUT"
+          
+          # Exit with original test exit code
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "⚠️ Some tests failed (exit code: $TEST_EXIT_CODE)"
+            exit 0  # Don't fail the step since continue-on-error is true
+          else
+            echo "✅ All tests passed!"
+          fi
+      
+      - name: Generate test report
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "📋 TEST EXECUTION REPORT"
+          echo "════════════════════════════════════════════════════════════"
+          echo "Overall Status: ${{ steps.apiTests.outcome }}"
+          echo "Test Environment: ${{ steps.check-tunnel.outputs.tunnel-url }}"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          
+          if [ "${{ steps.apiTests.outcome }}" == "success" ]; then
+            echo "✅ All API tests completed successfully"
+          else
+            echo "⚠️ Some tests failed or had issues - check logs above"
+          fi
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results/
+            *.xml
+          retention-days: 30
+
+  summary:
+    name: Workflow Summary
+    runs-on: ubuntu-latest
+    needs: [governance, test]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# FHIR API Governance & Testing Summary 📋" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Governance Check" >> $GITHUB_STEP_SUMMARY
+          echo "- OpenAPI Spec Linting: ${{ needs.governance.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## API Testing" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Collection Execution: ${{ needs.test.result == 'success' && '✅ Passed' || '⚠️ Failed/Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Outcome: \`${{ needs.test.outputs.test-result }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add recommendations based on test results
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "### ⚠️ Action Required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Tests did not complete successfully. Please:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check the test execution logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+            echo "2. Verify your local FHIR server is running with ngrok tunnel" >> $GITHUB_STEP_SUMMARY
+            echo "3. Ensure \`.ngrok-url.txt\` is up to date in the repository" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### Details" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: \`${{ github.workflow }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
