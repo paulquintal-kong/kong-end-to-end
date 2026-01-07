@@ -7,19 +7,678 @@ meta:
   created: 1767666825782
   modified: 1767666825782
   description: ""
+collection:
+  - name: Patient
+    meta:
+      id: fld_455a2d36511e4d16ae4f5ef00cccafc3
+      created: 1767670610173
+      modified: 1767749257462
+      sortKey: -1767670610173
+      description: Operations related to Patient resources
+    children:
+      - url: "{{ _.base_url }}/Patient"
+        name: Search for Patient resources
+        meta:
+          id: req_852290d298764ab89ed11772fccdb4b3
+          created: 1767670610176
+          modified: 1767677160978
+          isPrivate: false
+          description: Returns a bundle of Patient resources based on search criteria.
+          sortKey: -1767670610176
+        method: GET
+        parameters:
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: oauth2
+          disabled: true
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Patient.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        scripts:
+          afterResponse: >
+            const statusCode = insomnia.response.code;
+
+            const jsonBody = insomnia.response.json();
+
+
+            // Test 1: Verify status code is 200
+
+            insomnia.test('Check if status is 200', () => {
+                insomnia.expect(insomnia.response.code).to.eql(200);
+            });
+
+
+
+            // Test 2: Verify response is valid FHIR Patient Bundle
+
+            insomnia.test('Check if Resonse Body is a Resoure Bundle', () => {
+               insomnia.expect(jsonBody.resourceType).to.eql("Bundle");
+            	 insomnia.expect(jsonBody.entry[0].resource.resourceType).to.eql("Patient");
+            });
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient"
+        name: Create a new Patient resource
+        meta:
+          id: req_1fa6958d8eda4b61a32502a128fbf6e2
+          created: 1767670610177
+          modified: 1767749270923
+          isPrivate: false
+          description: Creates a new Patient resource.
+          sortKey: -1767670610177
+        method: POST
+        body:
+          mimeType: application/fhir+json
+          text: |-
+            {
+              "resourceType": "Patient",
+              "id": "string",
+              "identifier": [
+                {
+                  "system": "http://example.com/fhir/patient-identifier",
+                  "value": "12345"
+                }
+              ],
+              "name": [
+                {
+                  "family": "Sponge",
+                  "given": [
+                    "Bob"
+                  ]
+                }
+              ],
+              "gender": "male",
+              "birthDate": "1980-01-01",
+              "telecom": [
+                {
+                  "system": "phone",
+                  "value": "555-555-5555"
+                }
+              ]
+            }
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: oauth2
+          disabled: true
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Patient.write
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        scripts:
+          afterResponse: >-
+            const statusCode = insomnia.response.code;
+
+            const jsonBody = insomnia.response.json();
+
+
+            // Save 'id' from the response to an environment variable named
+            'sharedId'
+
+            insomnia.environment.set("id", jsonBody.id);
+
+
+            // Test 1: Verify status code is 201
+
+            insomnia.test('Check if status is 201', () => {
+                insomnia.expect(insomnia.response.code).to.eql(201);
+            });
+
+
+
+            // Test 2: Verify response is valid FHIR Patient Bundle
+
+            insomnia.test('Check if Resonse Body is a Patient Resoure', () => {
+               insomnia.expect(jsonBody.resourceType).to.eql("Patient");
+            });
+
+
+            // Test 3: Verify a new Patient with Id has been created
+             insomnia.test('Check for Patient Id', () => {
+                insomnia.expect(jsonBody.id).to.match(/^[0-9]+$/); 
+            });
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Patient/{{ _.id }}"
+        name: Retrieve a Patient resource by ID
+        meta:
+          id: req_763514288cf94b99959fd675478aea63
+          created: 1767670610178
+          modified: 1767748755836
+          isPrivate: false
+          description: Returns a specific Patient resource based on its ID.
+          sortKey: -1767670610178
+        method: GET
+        authentication:
+          type: oauth2
+          disabled: true
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Patient.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        scripts:
+          afterResponse: |-
+            const statusCode = insomnia.response.code;
+            const jsonBody = insomnia.response.json();
+            const sentUrl = insomnia.request.url;
+
+            // Test 1: Verify status code is 200
+            insomnia.test('Check if status is 200', () => {
+                insomnia.expect(insomnia.response.code).to.eql(200);
+            });
+
+
+            // Test 2: Verify response is valid FHIR Patient Bundle
+            insomnia.test('Check if Resonse Body is a Patient Resoure', () => {
+               insomnia.expect(jsonBody.resourceType).to.eql("Patient");
+            });
+
+            // Test 3: Verify that the input ID matches the response
+            insomnia.test('Check request Patient Id matches response', () => {
+                // 1. Attempt to retrieve the variable
+                const val = insomnia.environment.get('id');
+                console.log('DEBUG Input ID:',  val);
+
+            	  // 2. get the value of response
+                const rsp = jsonBody.id;
+                console.log('DEBUG output ID:', rsp);
+            	
+            	 // 3/ Compare values match
+            	insomnia.expect(val).to.eql(rsp);
+
+            });
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Observation
+    meta:
+      id: fld_a9426faa5bb5485db1881d93a8755b4b
+      created: 1767670610174
+      modified: 1767670610174
+      sortKey: -1767670610174
+      description: Operations related to Observation resources
+    children:
+      - url: "{{ _.base_url }}/Observation"
+        name: Create a new Observation resource
+        meta:
+          id: req_29d50e8108d0400c85e0ca63ff492abf
+          created: 1767670610178
+          modified: 1767670610178
+          isPrivate: false
+          description: Creates a new Observation resource.
+          sortKey: -1767670610178
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Observation.write
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation"
+        name: Search for Observation resources
+        meta:
+          id: req_5b6ca8f0442c45e3aaa1bae5388e64c4
+          created: 1767670610178
+          modified: 1767670610178
+          isPrivate: false
+          description: Returns a bundle of Observation resources based on search criteria.
+          sortKey: -1767670610178
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Observation.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Observation/{{ _.id }}"
+        name: Retrieve an Observation resource by ID
+        meta:
+          id: req_bb7584a660544e5a932213d37628d9e5
+          created: 1767670610179
+          modified: 1767670610179
+          isPrivate: false
+          description: Returns a specific Observation resource based on its ID.
+          sortKey: -1767670610179
+        method: GET
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Observation.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Condition
+    meta:
+      id: fld_7e70af8c8b0d4b55985a3073feb9ee6b
+      created: 1767670610175
+      modified: 1767670610175
+      sortKey: -1767670610175
+      description: Operations related to Condition resources
+    children:
+      - url: "{{ _.base_url }}/Condition"
+        name: Search for Condition resources
+        meta:
+          id: req_6eb7ed2542484128b2e1f10a8b3e5447
+          created: 1767670610180
+          modified: 1767670610180
+          isPrivate: false
+          description: Returns a bundle of Condition resources based on search criteria.
+          sortKey: -1767670610180
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Condition.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition/{{ _.id }}"
+        name: Retrieve a Condition resource by ID
+        meta:
+          id: req_8073fd7af7be438ebb82f1edc807d9a2
+          created: 1767670610181
+          modified: 1767670610181
+          isPrivate: false
+          description: Returns a specific Condition resource based on its ID.
+          sortKey: -1767670610181
+        method: GET
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Condition.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Condition"
+        name: Create a new Condition resource
+        meta:
+          id: req_d8cb5eb318574466a5ea9514307ba380
+          created: 1767670610181
+          modified: 1767670610181
+          isPrivate: false
+          description: Creates a new Condition resource.
+          sortKey: -1767670610181
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Condition.write
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Encounter
+    meta:
+      id: fld_96b6b3938dd14bc185ccb57031a5d4de
+      created: 1767670610175
+      modified: 1767670610175
+      sortKey: -1767670610175
+      description: Operations related to Encounter resources
+    children:
+      - url: "{{ _.base_url }}/Encounter"
+        name: Create a new Encounter resource
+        meta:
+          id: req_5717edb0f3c344abb265c4e6da92169b
+          created: 1767670610179
+          modified: 1767670610179
+          isPrivate: false
+          description: Creates a new Encounter resource.
+          sortKey: -1767670610179
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Encounter.write
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter"
+        name: Search for Encounter resources
+        meta:
+          id: req_9fd436c7fcdc4f94a6a1f59604c63d14
+          created: 1767670610179
+          modified: 1767670610179
+          isPrivate: false
+          description: Returns a bundle of Encounter resources based on search criteria.
+          sortKey: -1767670610179
+        method: GET
+        parameters:
+          - name: patient
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Encounter.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Encounter/{{ _.id }}"
+        name: Retrieve an Encounter resource by ID
+        meta:
+          id: req_135a6eb065114f6fac7db4d248d65a46
+          created: 1767670610180
+          modified: 1767670610180
+          isPrivate: false
+          description: Returns a specific Encounter resource based on its ID.
+          sortKey: -1767670610180
+        method: GET
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Encounter.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Medication
+    meta:
+      id: fld_1d5e848d251c4188b5289ade8eb72704
+      created: 1767670610176
+      modified: 1767670610176
+      sortKey: -1767670610176
+      description: Operations related to Medication resources
+    children:
+      - url: "{{ _.base_url }}/Medication"
+        name: Search for Medication resources
+        meta:
+          id: req_82f4fab81c7a44889fa1dc32f7f3a38f
+          created: 1767670610181
+          modified: 1767670610181
+          isPrivate: false
+          description: Returns a bundle of Medication resources based on search criteria.
+          sortKey: -1767670610181
+        method: GET
+        parameters:
+          - name: code
+            value: string
+            disabled: true
+          - name: _count
+            value: "10"
+            disabled: true
+          - name: _offset
+            value: "0"
+            disabled: true
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Medication.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication/{{ _.id }}"
+        name: Retrieve a Medication resource by ID
+        meta:
+          id: req_241e0916f4ef4f8c98a1e16c4cdab808
+          created: 1767670610182
+          modified: 1767670610182
+          isPrivate: false
+          description: Returns a specific Medication resource based on its ID.
+          sortKey: -1767670610182
+        method: GET
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Medication.read
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/Medication"
+        name: Create a new Medication resource
+        meta:
+          id: req_2f5856a96afa4e6bbc3b2588b9589731
+          created: 1767670610182
+          modified: 1767670610182
+          isPrivate: false
+          description: Creates a new Medication resource.
+          sortKey: -1767670610182
+        method: POST
+        body:
+          mimeType: application/fhir+json
+        headers:
+          - name: Content-Type
+            value: application/fhir+json
+            disabled: false
+        authentication:
+          type: oauth2
+          grantType: authorization_code
+          accessTokenUrl: https://example.com/oauth/token
+          authorizationUrl: https://example.com/oauth/authorize
+          clientId: "{{ _.oauth2ClientId }}"
+          clientSecret: "{{ _.oauth2ClientSecret }}"
+          scope: patient/Medication.write
+          redirectUrl: "{{ _.oauth2RedirectUrl }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
 cookieJar:
   name: Default Jar
   meta:
     id: jar_f793916b891c7e40072f75c1b95828afa3a7b74c
     created: 1767666828068
-    modified: 1767666828068
+    modified: 1767749257460
 environments:
   name: Base Environment
   meta:
     id: env_f793916b891c7e40072f75c1b95828afa3a7b74c
     created: 1767666825785
-    modified: 1767666825785
+    modified: 1767749257462
     isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
+  subEnvironments:
+    - name: OpenAPI env localhost:8080
+      meta:
+        id: env_2da8b17bb7404fc7a64661ac43b421d2
+        created: 1767670610173
+        modified: 1767749257462
+        isPrivate: false
+        sortKey: 1767670610173
+      data:
+        scheme: http
+        base_path: /fhir
+        host: localhost:8080
+        xApiKey: xApiKey
+        oauth2ClientId: clientId
+        oauth2RedirectUrl: http://localhost/
+        oauth2ClientSecret: clientSecret
+        id: "1013"
 spec:
   contents:
     openapi: 3.1.0
