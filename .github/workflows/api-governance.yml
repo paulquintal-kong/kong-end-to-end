@@ -204,10 +204,9 @@ jobs:
           
           # Run tests with Insomnia CLI and capture output
           set +e
-          inso -w "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1-wrk_8482e43ebd4e4c63923f4f78a48863ce.yaml" \
-            run test -e "Base Environment" \
-            --ci \
-            --disableCertValidation 2>&1 | tee "$TEST_OUTPUT"
+          inso run collection "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1" \
+            -e Dev \
+            --bail 2>&1 | tee "$TEST_OUTPUT"
           TEST_EXIT_CODE=$?
           set -e
           
