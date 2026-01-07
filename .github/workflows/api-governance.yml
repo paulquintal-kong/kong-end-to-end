@@ -40,7 +40,7 @@ jobs:
           node-version: '20'
       
       - name: Install Inso CLI
-        run: npm install -g @kong/insomnia-inso
+        run: npm install -g insomnia-inso
       
       - name: Lint FHIR API Specification
         run: |
@@ -90,7 +90,7 @@ jobs:
           node-version: '20'
       
       - name: Install Inso CLI
-        run: npm install -g @kong/insomnia-inso
+        run: npm install -g insomnia-inso
       
       - name: Wait for FHIR server to be ready
         run: |

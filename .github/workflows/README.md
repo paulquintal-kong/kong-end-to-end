@@ -53,7 +53,7 @@ gh workflow run api-governance.yml -f environment=dev
 ### Governance Check
 ```bash
 # Install Inso CLI
-npm install -g @kong/insomnia-inso
+npm install -g insomnia-inso
 
 # Run linting
 inso lint spec .insomnia/fhir-api-openapi.yaml
@@ -134,7 +134,7 @@ timeout 300 bash -c '...'  # 5 minutes
 ### Inso Not Found
 Ensure the installation step runs successfully:
 ```yaml
-- run: npm install -g @kong/insomnia-inso
+- run: npm install -g insomnia-inso
 ```
 
 ### Test Collection Not Found
