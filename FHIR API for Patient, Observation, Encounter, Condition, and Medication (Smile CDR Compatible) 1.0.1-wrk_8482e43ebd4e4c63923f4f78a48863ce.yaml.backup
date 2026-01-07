@@ -29,10 +29,13 @@ collection:
         parameters:
           - name: _count
             value: "10"
+            disabled: true
           - name: _offset
             value: "0"
+            disabled: true
         authentication:
-          type: none
+          type: oauth2
+          disabled: true
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -113,7 +116,8 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: none
+          type: oauth2
+          disabled: true
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -172,7 +176,8 @@ collection:
           sortKey: -1767670610178
         method: GET
         authentication:
-          type: none
+          type: oauth2
+          disabled: true
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -244,7 +249,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -273,14 +278,18 @@ collection:
         parameters:
           - name: patient
             value: string
+            disabled: true
           - name: code
             value: string
+            disabled: true
           - name: _count
             value: "10"
+            disabled: true
           - name: _offset
             value: "0"
+            disabled: true
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -307,7 +316,7 @@ collection:
           sortKey: -1767670610179
         method: GET
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -344,12 +353,15 @@ collection:
         parameters:
           - name: patient
             value: string
+            disabled: true
           - name: _count
             value: "10"
+            disabled: true
           - name: _offset
             value: "0"
+            disabled: true
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -376,7 +388,7 @@ collection:
           sortKey: -1767670610181
         method: GET
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -409,7 +421,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -450,7 +462,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -479,12 +491,15 @@ collection:
         parameters:
           - name: patient
             value: string
+            disabled: true
           - name: _count
             value: "10"
+            disabled: true
           - name: _offset
             value: "0"
+            disabled: true
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -511,7 +526,7 @@ collection:
           sortKey: -1767670610180
         method: GET
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -548,12 +563,15 @@ collection:
         parameters:
           - name: code
             value: string
+            disabled: true
           - name: _count
             value: "10"
+            disabled: true
           - name: _offset
             value: "0"
+            disabled: true
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -580,7 +598,7 @@ collection:
           sortKey: -1767670610182
         method: GET
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -613,7 +631,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: none
+          type: oauth2
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -1749,7 +1767,7 @@ spec:
           name: X-API-Key
           description: API Key for authentication
         OAuth2:
-          type: none
+          type: oauth2
           flows:
             authorizationCode:
               authorizationUrl: https://example.com/oauth/authorize
