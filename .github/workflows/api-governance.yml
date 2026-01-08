@@ -103,6 +103,12 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, 'initial commit') }}
     outputs:
       test-result: ${{ steps.apiTests.outcome }}
+    env:
+      # Load repository variables
+      FHIR_PATIENT_ID: ${{ vars.FHIR_PATIENT_ID || 'patient-1013' }}
+      FHIR_BASE_PATH: ${{ vars.FHIR_BASE_PATH || '/fhir' }}
+      FHIR_SCHEME: ${{ vars.FHIR_SCHEME || 'https' }}
+      FHIR_API_KEY: ${{ secrets.FHIR_API_KEY || 'xApiKey' }}
     
     steps:
       - name: Checkout code
@@ -183,6 +189,47 @@ jobs:
           tar -xf inso.tar.xz -C /tmp/inso
           chmod +x /tmp/inso/inso
       
+      - name: Extract host from ngrok URL and update workspace
+        id: extract-host
+        run: |
+          NGROK_URL="${{ steps.check-tunnel.outputs.tunnel-url }}"
+          # Extract host from URL: https://example.ngrok-free.dev/fhir -> example.ngrok-free.dev
+          FHIR_HOST=$(echo "$NGROK_URL" | sed -E 's|^https?://([^/]+).*|\1|')
+          echo "host=$FHIR_HOST" >> $GITHUB_OUTPUT
+          echo "✅ Extracted host: $FHIR_HOST"
+          
+          # Update the CI environment in the Insomnia workspace
+          WORKSPACE_FILE=".insomnia/fhir-api-insomnia.yaml"
+          
+          echo "📝 Updating CI environment in workspace..."
+          awk -v host="$FHIR_HOST" -v scheme="${{ env.FHIR_SCHEME }}" -v path="${{ env.FHIR_BASE_PATH }}" -v id="${{ env.FHIR_PATIENT_ID }}" '
+          /name: CI/,/^spec:/ {
+              if (/host:/ && !/oauth/) {
+                  print "        host: " host
+                  next
+              }
+              if (/scheme:/) {
+                  print "        scheme: " scheme
+                  next
+              }
+              if (/base_path:/) {
+                  print "        base_path: " path
+                  next
+              }
+              if (/id:/ && !/oauth/ && !/meta/) {
+                  print "        id: \"" id "\""
+                  next
+              }
+          }
+          {print}
+          ' "$WORKSPACE_FILE" > "${WORKSPACE_FILE}.tmp"
+          mv "${WORKSPACE_FILE}.tmp" "$WORKSPACE_FILE"
+          
+          echo "✅ CI environment updated successfully"
+          echo ""
+          echo "🔍 Verification:"
+          grep -A 15 "name: CI" "$WORKSPACE_FILE" | grep -E "(scheme|host|base_path|id):" || true
+      
       - name: RUN API TESTS
         id: apiTests
         continue-on-error: true
@@ -193,6 +240,10 @@ jobs:
           echo "🧪 FHIR API TEST EXECUTION"
           echo "════════════════════════════════════════════════════════════"
           echo "Test Environment: $FHIR_BASE_URL"
+          echo "FHIR Host: ${{ steps.extract-host.outputs.host }}"
+          echo "Patient ID: $FHIR_PATIENT_ID"
+          echo "Base Path: $FHIR_BASE_PATH"
+          echo "Scheme: $FHIR_SCHEME"
           echo "════════════════════════════════════════════════════════════"
           echo ""
           
@@ -205,8 +256,8 @@ jobs:
           # Run tests with Insomnia CLI and capture output
           set +e
           inso run collection "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1" \
-            -w "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1-wrk_8482e43ebd4e4c63923f4f78a48863ce.yaml" \
-            -e "OpenAPI env localhost:8080" \
+            -w ".insomnia/fhir-api-insomnia.yaml" \
+            -e "CI" \
             --disableCertValidation \
             --bail 2>&1 | tee "$TEST_OUTPUT"
           TEST_EXIT_CODE=$?

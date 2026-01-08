@@ -189,17 +189,39 @@ echo "$NGROK_URL/fhir" > .ngrok-url.txt
 echo -e "${GREEN}✓ Ngrok tunnel established${NC}"
 
 # Update ngrok URL in Insomnia workspace
-echo -e "${BLUE}Updating ngrok URL in configuration files...${NC}"
+echo -e "${BLUE}Updating Insomnia workspace with ngrok URL...${NC}"
 
-INSOMNIA_WORKSPACE="FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1-wrk_8482e43ebd4e4c63923f4f78a48863ce.yaml"
+INSOMNIA_WORKSPACE=".insomnia/fhir-api-insomnia.yaml"
 if [ -f "$INSOMNIA_WORKSPACE" ]; then
-    # Extract hostname from ngrok URL (remove https:// and /fhir)
+    # Extract hostname from ngrok URL (remove https://)
     NGROK_HOST=$(echo "$NGROK_URL" | sed 's|https://||')
     
-    # Update the host in the Insomnia workspace
-    sed -i.bak "s|host: localhost:8080|host: $NGROK_HOST|g" "$INSOMNIA_WORKSPACE"
-    sed -i.bak "s|scheme: http|scheme: https|g" "$INSOMNIA_WORKSPACE"
-    rm -f "${INSOMNIA_WORKSPACE}.bak"
+    # Update both local and CI environments in the workspace
+    # Using awk for precise control over which lines to update
+    awk -v host="$NGROK_HOST" '
+    /name: OpenAPI env localhost:8080/,/name: CI/ {
+        if (/host:/) {
+            print "        host: " host
+            next
+        }
+        if (/scheme:/) {
+            print "        scheme: https"
+            next
+        }
+    }
+    /name: CI/,/^spec:/ {
+        if (/host:/) {
+            print "        host: " host
+            next
+        }
+        if (/scheme:/) {
+            print "        scheme: https"
+            next
+        }
+    }
+    {print}
+    ' "$INSOMNIA_WORKSPACE" > "${INSOMNIA_WORKSPACE}.tmp"
+    mv "${INSOMNIA_WORKSPACE}.tmp" "$INSOMNIA_WORKSPACE"
     
     echo -e "${GREEN}✓ Updated Insomnia workspace with ngrok URL${NC}"
 else

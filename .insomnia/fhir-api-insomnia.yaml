@@ -29,13 +29,10 @@ collection:
         parameters:
           - name: _count
             value: "10"
-            disabled: true
           - name: _offset
             value: "0"
-            disabled: true
         authentication:
-          type: oauth2
-          disabled: true
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -116,8 +113,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: oauth2
-          disabled: true
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -176,8 +172,7 @@ collection:
           sortKey: -1767670610178
         method: GET
         authentication:
-          type: oauth2
-          disabled: true
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -249,7 +244,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -278,18 +273,14 @@ collection:
         parameters:
           - name: patient
             value: string
-            disabled: true
           - name: code
             value: string
-            disabled: true
           - name: _count
             value: "10"
-            disabled: true
           - name: _offset
             value: "0"
-            disabled: true
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -316,7 +307,7 @@ collection:
           sortKey: -1767670610179
         method: GET
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -353,15 +344,12 @@ collection:
         parameters:
           - name: patient
             value: string
-            disabled: true
           - name: _count
             value: "10"
-            disabled: true
           - name: _offset
             value: "0"
-            disabled: true
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -388,7 +376,7 @@ collection:
           sortKey: -1767670610181
         method: GET
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -421,7 +409,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -462,7 +450,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -491,15 +479,12 @@ collection:
         parameters:
           - name: patient
             value: string
-            disabled: true
           - name: _count
             value: "10"
-            disabled: true
           - name: _offset
             value: "0"
-            disabled: true
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -526,7 +511,7 @@ collection:
           sortKey: -1767670610180
         method: GET
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -563,15 +548,12 @@ collection:
         parameters:
           - name: code
             value: string
-            disabled: true
           - name: _count
             value: "10"
-            disabled: true
           - name: _offset
             value: "0"
-            disabled: true
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -598,7 +580,7 @@ collection:
           sortKey: -1767670610182
         method: GET
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -631,7 +613,7 @@ collection:
             value: application/fhir+json
             disabled: false
         authentication:
-          type: oauth2
+          type: none
           grantType: authorization_code
           accessTokenUrl: https://example.com/oauth/token
           authorizationUrl: https://example.com/oauth/authorize
@@ -663,7 +645,7 @@ environments:
   data:
     base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
   subEnvironments:
-    - name: OpenAPI env localhost:8080
+        host: asia-bosker-renna.ngrok-free.dev
       meta:
         id: env_2da8b17bb7404fc7a64661ac43b421d2
         created: 1767670610173
@@ -678,14 +660,14 @@ environments:
         oauth2ClientId: clientId
         oauth2RedirectUrl: http://localhost/
         oauth2ClientSecret: clientSecret
-        id: "1013"
-    - name: Dev
+        id: "patient-1013"
+    - name: CI
       meta:
-        id: env_5c5e0b86e3e9472b99bc84b41278609e
-        created: 1767816359228
-        modified: 1767816406512
+        id: env_ci_github_actions_auto
+        created: 1736286000000
+        modified: 1736286000000
         isPrivate: false
-        sortKey: 1767816359228
+        sortKey: 1736286000000
       data:
         scheme: https
         base_path: /fhir
@@ -694,7 +676,7 @@ environments:
         oauth2ClientId: clientId
         oauth2RedirectUrl: http://localhost/
         oauth2ClientSecret: clientSecret
-        id: "1013"
+        id: "patient-1013"
 spec:
   contents:
     openapi: 3.1.0
@@ -1767,7 +1749,7 @@ spec:
           name: X-API-Key
           description: API Key for authentication
         OAuth2:
-          type: oauth2
+          type: none
           flows:
             authorizationCode:
               authorizationUrl: https://example.com/oauth/authorize
