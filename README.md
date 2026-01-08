@@ -69,6 +69,7 @@ brew install inso
 inso run collection "FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1" \
   -w ".insomnia/fhir-api-insomnia.yaml" \
   -e "OpenAPI env localhost:8080" \
+  -i "fld_455a2d36511e4d16ae4f5ef00cccafc3" \
   --bail
 ```
 

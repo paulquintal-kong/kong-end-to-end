@@ -1,7 +1,6 @@
 type: spec.insomnia.rest/5.0
 schema_version: "5.1"
-name: FHIR API
-  (Smile CDR Compatible) 1.0.1
+name: FHIR API for Patient, Observation, Encounter, Condition, and Medication (Smile CDR Compatible) 1.0.1
 meta:
   id: wrk_8482e43ebd4e4c63923f4f78a48863ce
   created: 1767666825782
