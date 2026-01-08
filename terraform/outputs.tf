@@ -37,3 +37,19 @@ output "catalog_service_name" {
   description = "Display name of the Service Hub catalog entry"
   value       = konnect_catalog_service.fhir_patient_catalog.display_name
 }
+
+# NEW Catalog API Outputs (Applications > Catalog > API)
+output "catalog_api_id" {
+  description = "The ID of the Catalog API"
+  value       = konnect_api.fhir_patient_api.id
+}
+
+output "catalog_api_implementation_id" {
+  description = "The ID of the API Implementation linking to the gateway service"
+  value       = konnect_api_implementation.fhir_patient_implementation.id
+}
+
+output "catalog_api_slug" {
+  description = "The slug for the Catalog API"
+  value       = konnect_api.fhir_patient_api.slug
+}

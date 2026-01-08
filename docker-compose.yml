@@ -32,6 +32,47 @@ services:
     networks:
       - fhir-network
 
+  # Kong Gateway Data Plane (connected to Konnect Control Plane)
+  kong-gateway:
+    image: kong/kong-gateway:3.13.0.0
+    container_name: kong-dataplane
+    environment:
+      # Data Plane mode
+      - KONG_ROLE=data_plane
+      - KONG_DATABASE=off
+      
+      # Konnect Control Plane connection
+      - KONG_CLUSTER_CONTROL_PLANE=c1ed874bc8.au.cp0.konghq.com:443
+      - KONG_CLUSTER_SERVER_NAME=c1ed874bc8.au.cp0.konghq.com
+      - KONG_CLUSTER_TELEMETRY_ENDPOINT=c1ed874bc8.au.tp0.konghq.com:443
+      - KONG_CLUSTER_TELEMETRY_SERVER_NAME=c1ed874bc8.au.tp0.konghq.com
+      
+      # Use pinned certificates (mTLS)
+      - KONG_CLUSTER_MTLS=pki
+      - KONG_CLUSTER_CERT=/etc/secrets/kong-cluster/tls.crt
+      - KONG_CLUSTER_CERT_KEY=/etc/secrets/kong-cluster/tls.key
+      
+      # Proxy configuration
+      - KONG_PROXY_LISTEN=0.0.0.0:8000
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      
+      # Additional settings
+      - KONG_LUA_SSL_TRUSTED_CERTIFICATE=system
+      - KONG_VITALS=off
+    ports:
+      - "8000:8000"  # Proxy port (HTTP)
+      - "8443:8443"  # Proxy port (HTTPS)
+    volumes:
+      - ./.kong:/etc/secrets/kong-cluster:ro
+    restart: unless-stopped
+    networks:
+      - fhir-network
+    depends_on:
+      - fhir-server
+
 volumes:
   fhir-data:
     driver: local

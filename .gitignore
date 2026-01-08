@@ -5,6 +5,9 @@
 .ngrok.pid
 # Note: .ngrok-url.txt should be committed for CI/CD testing
 
+# Kong certificates (contains sensitive cluster certificates)
+.kong/
+
 # Terraform files
 terraform/.terraform/
 terraform/.terraform.lock.hcl

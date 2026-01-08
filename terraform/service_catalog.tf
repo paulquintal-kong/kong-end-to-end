@@ -9,31 +9,35 @@ resource "konnect_catalog_service" "fhir_patient_catalog" {
   # Human-readable display name (REQUIRED)
   display_name = "Patient Records API"
 
-  # Service description
-  description = var.service_purpose
+  # Service description - include all metadata here since custom_fields has restrictions
+  description = <<-EOT
+    ${var.service_purpose}
+    
+    Contact: ${var.service_contact_team} (${var.service_contact_email})
+    Version: ${var.service_version}
+    FHIR Version: R4
+    
+    ${var.service_architecture}
+    
+    ${var.service_dependencies}
+    
+    ${var.service_support_sla}
+  EOT
 
   # Labels for categorization and filtering in Service Hub
+  # Use labels to store key metadata for filtering/searching
   labels = {
-    environment       = "development"
-    team              = "healthcare"
-    api_type          = "fhir"
-    resource_type     = "patient"
-    catalog_published = "true"
+    environment        = "development"
+    team               = "healthcare"
+    api_type           = "fhir"
+    fhir_version       = "r4"
+    resource_type      = "patient"
+    version            = "1-0-1"
+    gateway_service_id = konnect_gateway_service.fhir_patient_service.id
   }
 
-  # Custom fields with service metadata (stored as JSON string)
-  # This includes link to the gateway service for reference
-  custom_fields = jsonencode({
-    contact_email        = var.service_contact_email
-    contact_team         = var.service_contact_team
-    architecture_details = var.service_architecture
-    dependencies         = var.service_dependencies
-    support_sla          = var.service_support_sla
-    api_version          = var.service_version
-    fhir_version         = "R4"
-    gateway_service_id   = konnect_gateway_service.fhir_patient_service.id
-    gateway_service_name = konnect_gateway_service.fhir_patient_service.name
-  })
+  # Note: custom_fields is not used because Kong Konnect requires predefined fields
+  # and doesn't allow arbitrary properties. All metadata is in description and labels.
 
   depends_on = [konnect_gateway_service.fhir_patient_service]
 }

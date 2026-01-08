@@ -3,7 +3,7 @@ terraform {
   required_providers {
     konnect = {
       source  = "kong/konnect"
-      version = "~> 3.4"
+      version = "3.4.3"  # Latest stable version with konnect_api resources
     }
   }
   required_version = ">= 1.0"
