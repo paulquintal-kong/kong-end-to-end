@@ -13,3 +13,4 @@ terraform/*.tfstate.backup
 terraform/crash.log
 terraform/crash.*.log
 # Note: terraform.tfvars is auto-generated and should be committed (no secrets in it)
+.vscode/settings.json
