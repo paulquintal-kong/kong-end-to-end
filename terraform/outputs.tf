@@ -14,16 +14,26 @@ output "control_plane_endpoint" {
 }
 
 output "service_id" {
-  description = "ID of the Kong service"
+  description = "ID of the Kong gateway service"
   value       = konnect_gateway_service.fhir_patient_service.id
 }
 
 output "service_name" {
-  description = "Name of the Kong service"
+  description = "Name of the Kong gateway service"
   value       = konnect_gateway_service.fhir_patient_service.name
 }
 
 output "service_url" {
-  description = "Full URL of the Kong service"
+  description = "Full URL of the Kong gateway service"
   value       = "https://${konnect_gateway_service.fhir_patient_service.host}${konnect_gateway_service.fhir_patient_service.path}"
+}
+
+output "catalog_service_id" {
+  description = "ID of the Service Hub catalog entry"
+  value       = konnect_catalog_service.fhir_patient_catalog.id
+}
+
+output "catalog_service_name" {
+  description = "Display name of the Service Hub catalog entry"
+  value       = konnect_catalog_service.fhir_patient_catalog.display_name
 }

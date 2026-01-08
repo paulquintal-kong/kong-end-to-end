@@ -11,5 +11,5 @@ terraform {
 
 provider "konnect" {
   personal_access_token = var.konnect_pat
-  server_url           = "https://au.api.konghq.com"
+  server_url            = "https://au.api.konghq.com"
 }
