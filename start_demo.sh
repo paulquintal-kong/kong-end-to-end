@@ -197,28 +197,26 @@ if [ -f "$INSOMNIA_WORKSPACE" ]; then
     NGROK_HOST=$(echo "$NGROK_URL" | sed 's|https://||')
     
     # Update both local and CI environments in the workspace
-    # Using awk for precise control over which lines to update
+    # Using awk for precise control - only update host/scheme in data sections
     awk -v host="$NGROK_HOST" '
-    /name: OpenAPI env localhost:8080/,/name: CI/ {
-        if (/host:/) {
-            print "        host: " host
-            next
-        }
-        if (/scheme:/) {
-            print "        scheme: https"
-            next
-        }
-    }
-    /name: CI/,/^spec:/ {
-        if (/host:/) {
-            print "        host: " host
-            next
-        }
-        if (/scheme:/) {
-            print "        scheme: https"
-            next
-        }
-    }
+    BEGIN { in_local=0; in_ci=0; in_data=0 }
+    
+    # Track OpenAPI env
+    /- name: OpenAPI env localhost:8080/ { in_local=1; print; next }
+    in_local && /- name: CI/ { in_local=0 }
+    in_local && /^      data:/ { in_data=1; print; next }
+    in_local && in_data && /^    - name:/ { in_data=0; in_local=0 }
+    in_local && in_data && /^        host:/ && !/oauth/ { print "        host: " host; next }
+    in_local && in_data && /^        scheme:/ { print "        scheme: https"; next }
+    
+    # Track CI env
+    /- name: CI/ { in_ci=1; print; next }
+    in_ci && /^spec:/ { in_ci=0 }
+    in_ci && /^      data:/ { in_data=1; print; next }
+    in_ci && in_data && /^spec:/ { in_data=0; in_ci=0 }
+    in_ci && in_data && /^        host:/ && !/oauth/ { print "        host: " host; next }
+    in_ci && in_data && /^        scheme:/ { print "        scheme: https"; next }
+    
     {print}
     ' "$INSOMNIA_WORKSPACE" > "${INSOMNIA_WORKSPACE}.tmp"
     mv "${INSOMNIA_WORKSPACE}.tmp" "$INSOMNIA_WORKSPACE"

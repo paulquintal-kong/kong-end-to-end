@@ -645,7 +645,7 @@ environments:
   data:
     base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
   subEnvironments:
-        host: asia-bosker-renna.ngrok-free.dev
+    - name: OpenAPI env localhost:8080
       meta:
         id: env_2da8b17bb7404fc7a64661ac43b421d2
         created: 1767670610173

@@ -203,24 +203,15 @@ jobs:
           
           echo "📝 Updating CI environment in workspace..."
           awk -v host="$FHIR_HOST" -v scheme="${{ env.FHIR_SCHEME }}" -v path="${{ env.FHIR_BASE_PATH }}" -v id="${{ env.FHIR_PATIENT_ID }}" '
-          /name: CI/,/^spec:/ {
-              if (/host:/ && !/oauth/) {
-                  print "        host: " host
-                  next
-              }
-              if (/scheme:/) {
-                  print "        scheme: " scheme
-                  next
-              }
-              if (/base_path:/) {
-                  print "        base_path: " path
-                  next
-              }
-              if (/id:/ && !/oauth/ && !/meta/) {
-                  print "        id: \"" id "\""
-                  next
-              }
-          }
+          BEGIN { in_ci=0; in_data=0 }
+          /- name: CI/ { in_ci=1; print; next }
+          in_ci && /- name:/ && !/- name: CI/ { in_ci=0 }
+          in_ci && /^      data:/ { in_data=1; print; next }
+          in_ci && in_data && /^    - name:/ { in_data=0; in_ci=0 }
+          in_ci && in_data && /^        host:/ && !/oauth/ { print "        host: " host; next }
+          in_ci && in_data && /^        scheme:/ { print "        scheme: " scheme; next }
+          in_ci && in_data && /^        base_path:/ { print "        base_path: " path; next }
+          in_ci && in_data && /^        id:/ && !/oauth/ && !/meta/ { print "        id: \"" id "\""; next }
           {print}
           ' "$WORKSPACE_FILE" > "${WORKSPACE_FILE}.tmp"
           mv "${WORKSPACE_FILE}.tmp" "$WORKSPACE_FILE"
