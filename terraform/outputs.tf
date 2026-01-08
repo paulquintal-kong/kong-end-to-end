@@ -15,15 +15,15 @@ output "control_plane_endpoint" {
 
 output "service_id" {
   description = "ID of the Kong service"
-  value       = konnect_gateway_service.fhir_service.id
+  value       = konnect_gateway_service.fhir_patient_service.id
 }
 
 output "service_name" {
   description = "Name of the Kong service"
-  value       = konnect_gateway_service.fhir_service.name
+  value       = konnect_gateway_service.fhir_patient_service.name
 }
 
 output "service_url" {
   description = "Full URL of the Kong service"
-  value       = "https://${konnect_gateway_service.fhir_service.host}${konnect_gateway_service.fhir_service.path}"
+  value       = "https://${konnect_gateway_service.fhir_patient_service.host}${konnect_gateway_service.fhir_patient_service.path}"
 }

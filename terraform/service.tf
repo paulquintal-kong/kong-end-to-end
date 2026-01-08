@@ -30,19 +30,3 @@ resource "konnect_gateway_service" "fhir_patient_service_catalog" {
   # Extended metadata stored as custom fields (labels/tags)
   # Note: Full documentation will be added via API Specs and Dev Portal
 }
-
-# Output Service Details
-output "service_id" {
-  description = "ID of the created FHIR service"
-  value       = konnect_gateway_service.fhir_patient_service.id
-}
-
-output "service_name" {
-  description = "Name of the FHIR service"
-  value       = konnect_gateway_service.fhir_patient_service.name
-}
-
-output "service_url" {
-  description = "Upstream URL of the FHIR service"
-  value       = "https://${konnect_gateway_service.fhir_patient_service.host}${konnect_gateway_service.fhir_patient_service.path}"
-}
