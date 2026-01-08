@@ -1,6 +1,6 @@
 type: spec.insomnia.rest/5.0
 schema_version: "5.1"
-name: FHIR API for Patient, Observation, Encounter, Condition, and Medication
+name: FHIR API
   (Smile CDR Compatible) 1.0.1
 meta:
   id: wrk_8482e43ebd4e4c63923f4f78a48863ce
@@ -77,7 +77,7 @@ collection:
           modified: 1767749270923
           isPrivate: false
           description: Creates a new Patient resource.
-          sortKey: -1767670610177
+          sortKey: -1767670610180
         method: POST
         body:
           mimeType: application/fhir+json
@@ -169,7 +169,7 @@ collection:
           modified: 1767748755836
           isPrivate: false
           description: Returns a specific Patient resource based on its ID.
-          sortKey: -1767670610178
+          sortKey: -1767670610177
         method: GET
         authentication:
           type: none
@@ -235,7 +235,7 @@ collection:
           modified: 1767670610178
           isPrivate: false
           description: Creates a new Observation resource.
-          sortKey: -1767670610178
+          sortKey: -1767670610180
         method: POST
         body:
           mimeType: application/fhir+json
@@ -400,7 +400,7 @@ collection:
           modified: 1767670610181
           isPrivate: false
           description: Creates a new Condition resource.
-          sortKey: -1767670610181
+          sortKey: -1767670610182
         method: POST
         body:
           mimeType: application/fhir+json
@@ -441,7 +441,7 @@ collection:
           modified: 1767670610179
           isPrivate: false
           description: Creates a new Encounter resource.
-          sortKey: -1767670610179
+          sortKey: -1767670610180
         method: POST
         body:
           mimeType: application/fhir+json
@@ -474,7 +474,7 @@ collection:
           modified: 1767670610179
           isPrivate: false
           description: Returns a bundle of Encounter resources based on search criteria.
-          sortKey: -1767670610179
+          sortKey: -1767670610178
         method: GET
         parameters:
           - name: patient
@@ -604,7 +604,7 @@ collection:
           modified: 1767670610182
           isPrivate: false
           description: Creates a new Medication resource.
-          sortKey: -1767670610182
+          sortKey: -1767670610183
         method: POST
         body:
           mimeType: application/fhir+json
