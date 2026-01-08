@@ -17,7 +17,7 @@ resource "konnect_gateway_service" "fhir_patient_service" {
 
 # Service Catalog Documentation (using service description and labels)
 resource "konnect_gateway_service" "fhir_patient_service_catalog" {
-  name             = "${var.service_name} - Catalog Entry"
+  name             = "${var.service_name}-Catalog-Entry"
   protocol         = "https"
   host             = replace(replace(var.fhir_server_url, "https://", ""), "/fhir", "")
   port             = 443

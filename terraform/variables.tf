@@ -29,7 +29,7 @@ variable "control_plane_description" {
 variable "service_name" {
   description = "Name of the service in Kong catalog"
   type        = string
-  default     = "Patient Records API"
+  default     = "Patient-Records-API"
 }
 
 variable "service_tags" {
