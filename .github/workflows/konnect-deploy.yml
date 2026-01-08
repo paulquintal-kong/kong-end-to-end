@@ -17,10 +17,22 @@ jobs:
   terraform-deploy:
     name: Deploy Service Catalog to Konnect
     runs-on: ubuntu-latest
+    environment: Dev
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -37,6 +49,11 @@ jobs:
         id: init
         run: terraform init
         working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Terraform Validate
         id: validate
@@ -47,6 +64,10 @@ jobs:
         id: plan
         env:
           TF_VAR_konnect_pat: ${{ secrets.KONNECT_PAT }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           terraform plan -no-color -out=tfplan
           echo "### Terraform Plan Output" >> $GITHUB_STEP_SUMMARY
@@ -60,6 +81,10 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           TF_VAR_konnect_pat: ${{ secrets.KONNECT_PAT }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           terraform apply -auto-approve tfplan
           echo "### Terraform Apply Complete ✅" >> $GITHUB_STEP_SUMMARY
@@ -80,6 +105,8 @@ jobs:
           echo "- **Tags**: FHIR, Healthcare, Patient Data" >> $GITHUB_STEP_SUMMARY
           echo "- **Control Plane**: FHIR Patient Records Control Plane" >> $GITHUB_STEP_SUMMARY
           echo "- **Region**: AU (https://au.api.konghq.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **Terraform State**: Azure Storage (quintalconsultingtfstate)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Access Points:" >> $GITHUB_STEP_SUMMARY
           echo "- Kong Konnect Dashboard: https://cloud.konghq.com" >> $GITHUB_STEP_SUMMARY
@@ -94,8 +121,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Common Issues:" >> $GITHUB_STEP_SUMMARY
           echo "- Verify KONNECT_PAT secret is set correctly" >> $GITHUB_STEP_SUMMARY
+          echo "- Check Azure credentials (AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, etc.)" >> $GITHUB_STEP_SUMMARY
           echo "- Check terraform.tfvars has valid fhir_server_url" >> $GITHUB_STEP_SUMMARY
           echo "- Ensure Terraform syntax is valid" >> $GITHUB_STEP_SUMMARY
+          echo "- Verify Azure Storage account access permissions" >> $GITHUB_STEP_SUMMARY
 
   dev-portal-update:
     name: Update Dev Portal (Placeholder)
