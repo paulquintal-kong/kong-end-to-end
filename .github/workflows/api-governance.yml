@@ -229,6 +229,25 @@ jobs:
           echo ""
           echo "🔍 Verification:"
           grep -A 15 "name: CI" "$WORKSPACE_FILE" | grep -E "(scheme|host|base_path|id):" || true
+          echo ""
+          echo "📍 Constructed base_url will be: ${{ env.FHIR_SCHEME }}://$FHIR_HOST${{ env.FHIR_BASE_PATH }}"
+          echo "   Example Patient endpoint: ${{ env.FHIR_SCHEME }}://$FHIR_HOST${{ env.FHIR_BASE_PATH }}/Patient"
+      
+      - name: Verify FHIR server is accessible via ngrok
+        run: |
+          CONSTRUCTED_URL="${{ env.FHIR_SCHEME }}://${{ steps.extract-host.outputs.host }}${{ env.FHIR_BASE_PATH }}"
+          echo "🔗 Testing FHIR server at: $CONSTRUCTED_URL/metadata"
+          
+          if curl -sf --max-time 10 "$CONSTRUCTED_URL/metadata" > /dev/null; then
+            echo "✅ FHIR server is accessible via ngrok"
+          else
+            echo "❌ FHIR server is not accessible at $CONSTRUCTED_URL"
+            echo "Please verify:"
+            echo "  1. Local FHIR server is running"
+            echo "  2. Ngrok tunnel is active"
+            echo "  3. .ngrok-url.txt contains the correct URL"
+            exit 1
+          fi
       
       - name: RUN API TESTS
         id: apiTests
