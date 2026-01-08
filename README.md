@@ -1,6 +1,6 @@
 # FHIR API Testing Environment
 
-A complete FHIR API development and testing environment with automated linting, testing, and CI/CD.
+A complete FHIR API development and testing environment with automated linting, testing, CI/CD, and Kong Konnect deployment.
 
 ## Quick Start
 
@@ -20,6 +20,7 @@ That's it! The script will:
 - Launch HAPI FHIR server on `localhost:8080`
 - Create ngrok tunnel for remote access
 - Update Insomnia workspace with ngrok URL
+- **Generate Terraform variables with ngrok URL**
 - Save tunnel URL to `.ngrok-url.txt` for CI/CD
 
 ## What's Included
@@ -35,9 +36,15 @@ That's it! The script will:
 - **Insomnia** test collection in `.insomnia/fhir-api-insomnia.yaml` with 3 Patient endpoint tests
 - **Spectral** linting with 32 custom FHIR business rules
 
+### Kong Konnect Integration
+- **Terraform** configuration for service catalog deployment
+- **GitHub Actions** workflow for automated Konnect updates
+- Service catalog with comprehensive documentation
+- See [KONNECT-SETUP.md](KONNECT-SETUP.md) for details
+
 ### CI/CD
 - **GitHub Actions** workflow for automatic API governance and testing
-- Runs on every push to `main` or when manually triggered
+- **Kong Konnect** deployment workflow for service catalog
 - Tests run against your local server via ngrok tunnel
 
 ## File Structure
@@ -47,15 +54,38 @@ That's it! The script will:
 ├── start_demo.sh                    # Main startup script
 ├── stop_demo.sh                     # Shutdown script
 ├── docker-compose.yml               # HAPI FHIR server configuration
+├── terraform/                       # Kong Konnect Terraform config
+│   ├── provider.tf                  # Konnect provider (AU region)
+│   ├── variables.tf                 # Variable definitions
+│   ├── terraform.tfvars             # Auto-generated values
+│   ├── control_plane.tf             # Control plane resource
+│   ├── service.tf                   # Service & catalog entry
+│   └── outputs.tf                   # Output definitions
 ├── .insomnia/                       # API specs & workspace
 │   ├── fhir-api-openapi.yaml        # OpenAPI 3.1.0 specification
 │   └── fhir-api-insomnia.yaml       # Insomnia workspace with tests
 ├── .spectral.yaml                   # API linting rules
 ├── .github/workflows/               # CI/CD pipeline
-│   └── api-governance.yml
+│   ├── api-governance.yml           # API testing workflow
+│   └── konnect-deploy.yml           # Kong Konnect deployment
 ├── .ngrok-url.txt                   # Current ngrok tunnel URL (auto-generated)
+├── KONNECT-SETUP.md                 # Kong Konnect setup guide
 └── Demo-Background.md               # Project background
 ```
+
+## Kong Konnect Deployment
+
+To deploy to Kong Konnect service catalog:
+
+1. **Setup** - Follow [KONNECT-SETUP.md](KONNECT-SETUP.md) to configure GitHub secrets
+2. **Run** - `./start_demo.sh` to generate Terraform variables
+3. **Deploy** - Push to `main` branch to trigger automatic deployment
+4. **Verify** - Check Kong Konnect dashboard for service catalog entry
+
+The deployment creates:
+- Control Plane: "FHIR Patient Records Control Plane"
+- Service: "Patient Records API" with comprehensive documentation
+- Service Catalog entry with tags, architecture, dependencies, and support details
 
 ## Testing Locally
 

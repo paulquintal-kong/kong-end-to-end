@@ -4,3 +4,12 @@
 .ngrok.log
 .ngrok.pid
 # Note: .ngrok-url.txt should be committed for CI/CD testing
+
+# Terraform files
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/crash.log
+terraform/crash.*.log
+# Note: terraform.tfvars is auto-generated and should be committed (no secrets in it)

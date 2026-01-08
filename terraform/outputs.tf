@@ -1,0 +1,6 @@
+control_plane_id       = ""
+control_plane_name     = ""
+control_plane_endpoint = ""
+service_id            = ""
+service_name          = ""
+service_url           = ""
