@@ -1,0 +1,18 @@
+{
+  "id": "519551c7-565e-4031-bd8e-8e5d50af25f2",
+  "name": "Patient Records API",
+  "display_name": "Developer Portal",
+  "description": null,
+  "default_domain": "d89b009b6d6e.au.kongportals.com",
+  "authentication_enabled": false,
+  "rbac_enabled": false,
+  "auto_approve_developers": false,
+  "auto_approve_applications": false,
+  "default_api_visibility": "public",
+  "default_page_visibility": "public",
+  "default_application_auth_strategy_id": null,
+  "labels": {},
+  "updated_at": "2026-01-09T04:38:39.212Z",
+  "created_at": "2026-01-09T04:38:21.805Z",
+  "canonical_domain": "d89b009b6d6e.au.kongportals.com"
+}

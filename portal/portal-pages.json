@@ -1,0 +1,90 @@
+{
+  "data": [
+    {
+      "id": "b7066521-c3aa-418d-9ced-fbb5374c2446",
+      "slug": "/apis",
+      "title": "APIs",
+      "visibility": "public",
+      "status": "published",
+      "description": "Explore a wide range of API products in our Developer Portal designed for fast, flexible development.",
+      "parent_page_id": null,
+      "created_at": "2026-01-09T04:38:24.098802Z",
+      "updated_at": "2026-01-09T04:38:24.13763Z",
+      "children": []
+    },
+    {
+      "id": "a73b692b-a493-4903-bfa9-b578d36a2eed",
+      "slug": "/getting-started",
+      "title": "Getting started",
+      "visibility": "public",
+      "status": "published",
+      "description": "Get started with our new Developer Portal!",
+      "parent_page_id": null,
+      "created_at": "2026-01-09T04:38:24.179092Z",
+      "updated_at": "2026-01-09T04:38:24.204305Z",
+      "children": []
+    },
+    {
+      "id": "fe2e40fc-e3bb-4557-b124-0027d6887903",
+      "slug": "/guides",
+      "title": "Guides",
+      "visibility": "public",
+      "status": "published",
+      "description": "Step-by-step guides to help you build, integrate, and optimize with our platform. Start coding faster with practical examples and best practices.",
+      "parent_page_id": null,
+      "created_at": "2026-01-09T04:38:24.219711Z",
+      "updated_at": "2026-01-09T04:38:24.250051Z",
+      "children": [
+        {
+          "id": "ba655799-2e03-4ad5-a849-020a0e8b8370",
+          "slug": "/document-apis",
+          "title": "Document APIs",
+          "visibility": "public",
+          "status": "published",
+          "description": "Discover best practices, tools, and examples to help developers understand and use your APIs with confidence.",
+          "parent_page_id": "fe2e40fc-e3bb-4557-b124-0027d6887903",
+          "created_at": "2026-01-09T04:38:24.288488Z",
+          "updated_at": "2026-01-09T04:38:24.310486Z",
+          "children": []
+        },
+        {
+          "id": "2deb726a-adb7-438b-9816-caf50a254c77",
+          "slug": "/publish-apis",
+          "title": "Publish APIs",
+          "visibility": "public",
+          "status": "published",
+          "description": "Learn best practices for exposing, versioning, and managing your APIs to accelerate integration and developer adoption.",
+          "parent_page_id": "fe2e40fc-e3bb-4557-b124-0027d6887903",
+          "created_at": "2026-01-09T04:38:24.350858Z",
+          "updated_at": "2026-01-09T04:38:24.381923Z",
+          "children": [
+            {
+              "id": "ea4ebe75-ba29-4143-a3e6-31ae386de6e1",
+              "slug": "/versioning",
+              "title": "API Versioning",
+              "visibility": "public",
+              "status": "published",
+              "description": "Learn best practices for API versioning to manage changes, ensure stability, and support developers over time.",
+              "parent_page_id": "2deb726a-adb7-438b-9816-caf50a254c77",
+              "created_at": "2026-01-09T04:38:24.422424Z",
+              "updated_at": "2026-01-09T04:38:24.457805Z",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c7d1b772-9278-4dbd-a4a8-ba550d0945d1",
+      "slug": "/",
+      "title": "Kong API",
+      "visibility": "public",
+      "status": "published",
+      "description": "Start building and innovating with our APIs",
+      "parent_page_id": null,
+      "created_at": "2026-01-09T04:38:24.47543Z",
+      "updated_at": "2026-01-09T04:38:24.508496Z",
+      "children": []
+    }
+  ]
+}
