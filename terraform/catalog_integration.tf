@@ -39,5 +39,3 @@ output "github_integration_authorized" {
 #    - Branch: main
 #    - Path: .insomnia (for API specs)
 # 7. Link to Catalog Service (Patient Records API)
-  description = "Whether the GitHub integration has been authorized"
-}
