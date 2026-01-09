@@ -22,6 +22,13 @@ resource "konnect_api" "fhir_patient_api" {
   }
 }
 
+# Create the API Specification separately
+resource "konnect_api_specification" "fhir_patient_spec" {
+  api_id  = konnect_api.fhir_patient_api.id
+  content = file("${path.module}/../.insomnia/fhir-api-openapi.yaml")
+  type    = "oas3"
+}
+
 # Link the API to the Gateway Service (Implementation)
 resource "konnect_api_implementation" "fhir_patient_implementation" {
   api_id = konnect_api.fhir_patient_api.id
