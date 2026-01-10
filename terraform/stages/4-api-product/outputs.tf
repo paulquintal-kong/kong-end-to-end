@@ -9,13 +9,8 @@ output "catalog_service_name" {
 }
 
 output "catalog_api_id" {
-  description = "Catalog API ID - Required for Stage 4"
+  description = "Catalog API ID - Required for Stage 5"
   value       = konnect_api.fhir_patient_api.id
-}
-
-output "api_specification_id" {
-  description = "API Specification ID"
-  value       = konnect_api_specification.fhir_patient_spec.id
 }
 
 output "api_implementation_id" {
@@ -29,12 +24,11 @@ output "rate_limit_plugin_id" {
 }
 
 # Output as JSON for easy consumption by next stage
-output "stage3_outputs" {
-  description = "All outputs from Stage 3 (for Stage 4 input)"
+output "stage4_outputs" {
+  description = "All outputs from Stage 4 (for Stage 5 input)"
   value = {
     catalog_service_id    = konnect_catalog_service.fhir_patient_catalog.id
     catalog_api_id        = konnect_api.fhir_patient_api.id
-    api_specification_id  = konnect_api_specification.fhir_patient_spec.id
     rate_limit_per_minute = var.rate_limit_per_minute
   }
   sensitive = false

@@ -47,19 +47,6 @@ resource "konnect_api" "fhir_patient_api" {
 }
 
 # ========================================================================
-# API Specification
-# ========================================================================
-# The specification provides the OpenAPI/Swagger contract
-# This is displayed in the catalog and portal for documentation
-# ========================================================================
-
-resource "konnect_api_specification" "fhir_patient_spec" {
-  api_id  = konnect_api.fhir_patient_api.id
-  content = file(var.openapi_spec_path)
-  type    = "oas3"
-}
-
-# ========================================================================
 # API Implementation
 # ========================================================================
 # Links the Catalog API to the actual Gateway Service
