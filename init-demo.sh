@@ -618,6 +618,90 @@ if [ $CHECKS_FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ Environment is ready for demo!${NC}"
     echo ""
     
+    # ========================================================================
+    # Start FHIR Server and ngrok (required for both local and workflow modes)
+    # ========================================================================
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}Starting Backend Services${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    
+    # Start Docker containers
+    if docker info &> /dev/null && [ -f "docker-compose.yml" ]; then
+        echo -e "${CYAN}Starting HAPI FHIR server...${NC}"
+        if docker-compose up -d; then
+            echo -e "${GREEN}✓${NC} HAPI FHIR server started"
+            echo -e "   ${CYAN}URL:${NC} http://localhost:8080/fhir"
+            
+            # Wait for FHIR server to be ready
+            echo -e "${CYAN}Waiting for FHIR server to be ready...${NC}"
+            timeout=60
+            counter=0
+            while ! curl -s http://localhost:8080/fhir/metadata > /dev/null 2>&1; do
+                sleep 2
+                counter=$((counter + 2))
+                if [ $counter -ge $timeout ]; then
+                    echo -e "${YELLOW}⚠${NC} FHIR server taking longer than expected to start"
+                    echo -e "   ${YELLOW}Continue anyway - it may still be initializing${NC}"
+                    break
+                fi
+                echo -n "."
+            done
+            echo ""
+            
+            if curl -s http://localhost:8080/fhir/metadata > /dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} FHIR server is ready"
+            fi
+        else
+            echo -e "${RED}✗${NC} Failed to start HAPI FHIR server"
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC} Skipping Docker - daemon not running or docker-compose.yml not found"
+    fi
+    
+    echo ""
+    
+    # Start ngrok tunnel
+    if command -v ngrok &> /dev/null; then
+        echo -e "${CYAN}Starting ngrok tunnel...${NC}"
+        
+        # Kill any existing ngrok processes
+        pkill -x ngrok 2>/dev/null || true
+        
+        # Start ngrok in background
+        ngrok http 8080 --log=stdout > .ngrok.log 2>&1 &
+        NGROK_PID=$!
+        echo $NGROK_PID > .ngrok.pid
+        
+        # Wait for ngrok to be ready
+        sleep 3
+        
+        # Get ngrok URL
+        if command -v jq &> /dev/null; then
+            NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+        else
+            NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*\.ngrok-free\.dev')
+        fi
+        
+        if [ ! -z "$NGROK_URL" ]; then
+            echo -e "${GREEN}✓${NC} ngrok tunnel started"
+            echo -e "   ${CYAN}Public URL:${NC} $NGROK_URL"
+            echo -e "   ${CYAN}FHIR Endpoint:${NC} $NGROK_URL/fhir"
+            echo "$NGROK_URL" > .ngrok-url.txt
+            
+            echo ""
+            echo -e "${YELLOW}Important:${NC} Update your Stage 2 upstream_url to: ${CYAN}$NGROK_URL/fhir${NC}"
+        else
+            echo -e "${YELLOW}⚠${NC} ngrok started but URL not available yet"
+            echo -e "   ${YELLOW}Check URL with:${NC} curl http://localhost:4040/api/tunnels"
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC} ngrok not installed - skipping tunnel setup"
+        echo -e "   ${YELLOW}You'll need to configure a public URL manually${NC}"
+    fi
+    
+    echo ""
+    
     if [ "$EXECUTION_MODE" = "workflow" ]; then
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${CYAN}GitHub Workflow Setup${NC}"
