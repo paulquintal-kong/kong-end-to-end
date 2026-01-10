@@ -31,6 +31,27 @@ echo "=========================================="
 echo ""
 
 # ========================================================================
+# Execution Method Selection
+# ========================================================================
+echo -e "${BLUE}How would you like to run the demo?${NC}"
+echo -e "  1) ${CYAN}GitHub Workflow${NC} (Recommended - automated via CI/CD)"
+echo -e "  2) ${YELLOW}Local Command Line${NC} (Manual execution)"
+echo ""
+read -p "Choose execution method (1 or 2) [1]: " exec_method
+exec_method=${exec_method:-1}
+
+EXECUTION_MODE="workflow"
+if [ "$exec_method" = "2" ]; then
+    EXECUTION_MODE="local"
+    echo -e "${GREEN}✓${NC} Selected: Local command line execution"
+else
+    EXECUTION_MODE="workflow"
+    echo -e "${GREEN}✓${NC} Selected: GitHub Workflow (automated)"
+fi
+
+echo ""
+
+# ========================================================================
 # Function: Check if a command exists
 # ========================================================================
 check_command() {
@@ -582,14 +603,208 @@ echo ""
 if [ $CHECKS_FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ Environment is ready for demo!${NC}"
     echo ""
-    echo -e "${CYAN}Next Steps:${NC}"
-    echo -e "  1. Review backend selection: ${YELLOW}$BACKEND_SELECTED${NC}"
-    echo -e "  2. Start with Stage 1: ${YELLOW}cd terraform/stages/1-platform && ./demo.sh${NC}"
-    echo ""
-    echo -e "${CYAN}Documentation:${NC}"
-    echo -e "  - Backend setup: ${YELLOW}terraform/BACKEND-CONFIG.md${NC}"
-    echo -e "  - Demo guide: ${YELLOW}README.md${NC}"
-    echo ""
+    
+    if [ "$EXECUTION_MODE" = "workflow" ]; then
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${CYAN}GitHub Workflow Setup${NC}"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        
+        # Check if GitHub CLI is available
+        if command -v gh &> /dev/null; then
+            # Check if we're in a git repo
+            if git rev-parse --git-dir > /dev/null 2>&1; then
+                echo -e "${BLUE}Setting up GitHub Actions workflow...${NC}"
+                
+                # Create .github/workflows directory if it doesn't exist
+                mkdir -p .github/workflows
+                
+                # Create workflow file
+                cat > .github/workflows/kong-demo.yml <<'WORKFLOW_EOF'
+name: Kong Demo Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/kong-demo.yml'
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  deploy:
+    name: Deploy Kong Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Stage 1 - Platform
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/1-platform
+        run: |
+          cat > terraform.tfvars <<EOF
+          konnect_token = "${{ secrets.KONNECT_TOKEN }}"
+          environment   = "production"
+          project_name  = "fhir-patient-records"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage1-outputs.json
+      
+      - name: Stage 2 - Integration
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/2-integration
+        run: |
+          CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token    = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id = "$CONTROL_PLANE_ID"
+          upstream_url     = "https://asia-bosker-renna.ngrok-free.dev/fhir"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage2-outputs.json
+      
+      - name: Stage 4 - API Product
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/4-api-product
+        run: |
+          CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+          SERVICE_ID=$(jq -r '.service_id.value' ../stage2-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token         = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id      = "$CONTROL_PLANE_ID"
+          service_id            = "$SERVICE_ID"
+          rate_limit_per_minute = 5
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage3-outputs.json
+      
+      - name: Stage 5 - Developer Portal
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/5-developer-portal
+        run: |
+          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage3-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
+          catalog_api_id          = "$CATALOG_API_ID"
+          portal_name             = "Patient Records API"
+          portal_display_name     = "Developer Portal"
+          enable_auth             = false
+          auto_approve_developers = false
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+      
+      - name: Destroy Infrastructure
+        if: ${{ inputs.destroy }}
+        run: |
+          echo "Destroying infrastructure in reverse order..."
+          
+          cd terraform/stages/5-developer-portal
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="catalog_api_id=dummy" || true
+          
+          cd ../4-api-product
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="control_plane_id=dummy" -var="service_id=dummy" || true
+          
+          cd ../2-integration
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="control_plane_id=dummy" -var="upstream_url=dummy" || true
+          
+          cd ../1-platform
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" || true
+WORKFLOW_EOF
+                
+                echo -e "${GREEN}✓${NC} Created GitHub Actions workflow: .github/workflows/kong-demo.yml"
+                
+                # Set GitHub secrets
+                echo ""
+                echo -e "${YELLOW}Setting up GitHub secrets...${NC}"
+                
+                # Check if secrets exist, if not, create them
+                if [ ! -z "$KONNECT_TOKEN" ]; then
+                    gh secret set KONNECT_TOKEN --body "$KONNECT_TOKEN" 2>/dev/null && \
+                        echo -e "${GREEN}✓${NC} Set GitHub secret: KONNECT_TOKEN" || \
+                        echo -e "${YELLOW}⚠${NC} Failed to set KONNECT_TOKEN (may already exist)"
+                fi
+                
+                if [ ! -z "$ARM_ACCESS_KEY" ]; then
+                    gh secret set ARM_ACCESS_KEY --body "$ARM_ACCESS_KEY" 2>/dev/null && \
+                        echo -e "${GREEN}✓${NC} Set GitHub secret: ARM_ACCESS_KEY" || \
+                        echo -e "${YELLOW}⚠${NC} Failed to set ARM_ACCESS_KEY (may already exist)"
+                fi
+                
+                echo ""
+                echo -e "${CYAN}Next Steps:${NC}"
+                echo -e "  1. Review workflow: ${YELLOW}.github/workflows/kong-demo.yml${NC}"
+                echo -e "  2. Commit and push changes:"
+                echo -e "     ${YELLOW}git add .github/workflows/kong-demo.yml${NC}"
+                echo -e "     ${YELLOW}git commit -m \"Add Kong demo workflow\"${NC}"
+                echo -e "     ${YELLOW}git push${NC}"
+                echo -e "  3. Watch the workflow run: ${YELLOW}gh run watch${NC}"
+                echo -e "  4. Or trigger manually: ${YELLOW}gh workflow run kong-demo.yml${NC}"
+                echo ""
+                echo -e "${CYAN}To destroy infrastructure:${NC}"
+                echo -e "  ${YELLOW}gh workflow run kong-demo.yml -f destroy=true${NC}"
+                
+            else
+                echo -e "${RED}✗${NC} Not a git repository"
+                echo -e "   ${YELLOW}Initialize git first:${NC} git init"
+            fi
+        else
+            echo -e "${YELLOW}⚠${NC} GitHub CLI not installed"
+            echo -e "   ${YELLOW}Install with:${NC} brew install gh"
+            echo -e "   ${YELLOW}Or manually create workflow in:${NC} .github/workflows/kong-demo.yml"
+        fi
+        
+        echo ""
+    else
+        echo -e "${CYAN}Next Steps:${NC}"
+        echo -e "  1. Review backend selection: ${YELLOW}$BACKEND_SELECTED${NC}"
+        echo -e "  2. Start with Stage 1: ${YELLOW}cd terraform/stages/1-platform && ./demo.sh${NC}"
+        echo ""
+        echo -e "${CYAN}Documentation:${NC}"
+        echo -e "  - Backend setup: ${YELLOW}terraform/BACKEND-CONFIG.md${NC}"
+        echo -e "  - Demo guide: ${YELLOW}README.md${NC}"
+        echo ""
+    fi
     exit 0
 else
     echo -e "${RED}✗ Environment setup incomplete${NC}"
