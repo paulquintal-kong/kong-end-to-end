@@ -626,12 +626,13 @@ if [ $CHECKS_FAILED -eq 0 ]; then
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     
-    # Start Docker containers
+    # Start Docker containers (HAPI FHIR only - Kong Gateway deployed after Stage 1)
     if docker info &> /dev/null && [ -f "docker-compose.yml" ]; then
         echo -e "${CYAN}Starting HAPI FHIR server...${NC}"
-        if docker-compose up -d; then
+        if docker-compose up -d fhir-server; then
             echo -e "${GREEN}✓${NC} HAPI FHIR server started"
             echo -e "   ${CYAN}URL:${NC} http://localhost:8080/fhir"
+            echo -e "   ${YELLOW}Note:${NC} Kong Gateway will be deployed after Stage 1 (Control Plane)"
             
             # Wait for FHIR server to be ready
             echo -e "${CYAN}Waiting for FHIR server to be ready...${NC}"
