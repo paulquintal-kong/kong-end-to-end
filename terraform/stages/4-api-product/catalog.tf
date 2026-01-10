@@ -7,7 +7,7 @@
 # ========================================================================
 
 resource "konnect_catalog_service" "fhir_patient_catalog" {
-  name         = "patient-records-api"
+  name         = "patient-records-api-v2"
   display_name = "Patient Records API"
   description  = "FHIR R4 compliant API for managing patient medical records and health information"
   
