@@ -1,0 +1,57 @@
+name: Destroy All Stages
+
+on:
+  workflow_dispatch:
+    inputs:
+      control_plane_id:
+        description: 'Control Plane ID (for Stage 2)'
+        required: false
+        type: string
+      service_id:
+        description: 'Service ID (for Stage 4)'
+        required: false
+        type: string
+      catalog_api_id:
+        description: 'Catalog API ID (for Stage 5)'
+        required: false
+        type: string
+
+jobs:
+  stage5:
+    name: Destroy Stage 5 - Developer Portal
+    if: ${{ inputs.catalog_api_id != '' }}
+    uses: ./.github/workflows/stage5-developer-portal.yml
+    secrets: inherit
+    with:
+      catalog_api_id: ${{ inputs.catalog_api_id }}
+      destroy: true
+  
+  stage4:
+    name: Destroy Stage 4 - API Product
+    needs: stage5
+    if: ${{ always() && inputs.control_plane_id != '' && inputs.service_id != '' }}
+    uses: ./.github/workflows/stage4-api-product.yml
+    secrets: inherit
+    with:
+      control_plane_id: ${{ inputs.control_plane_id }}
+      service_id: ${{ inputs.service_id }}
+      destroy: true
+  
+  stage2:
+    name: Destroy Stage 2 - Integration
+    needs: stage4
+    if: ${{ always() && inputs.control_plane_id != '' }}
+    uses: ./.github/workflows/stage2-integration.yml
+    secrets: inherit
+    with:
+      control_plane_id: ${{ inputs.control_plane_id }}
+      destroy: true
+  
+  stage1:
+    name: Destroy Stage 1 - Platform
+    needs: stage2
+    if: ${{ always() }}
+    uses: ./.github/workflows/stage1-platform.yml
+    secrets: inherit
+    with:
+      destroy: true

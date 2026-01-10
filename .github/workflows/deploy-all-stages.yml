@@ -1,0 +1,64 @@
+name: Deploy All Stages
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment name'
+        required: false
+        type: string
+        default: 'production'
+      upstream_url:
+        description: 'Upstream FHIR server URL'
+        required: false
+        type: string
+        default: 'https://asia-bosker-renna.ngrok-free.dev/fhir'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+
+jobs:
+  stage1:
+    name: Stage 1 - Platform
+    uses: ./.github/workflows/stage1-platform.yml
+    secrets: inherit
+    with:
+      environment: ${{ inputs.environment || 'production' }}
+      project_name: 'fhir-patient-records'
+  
+  stage2:
+    name: Stage 2 - Integration
+    needs: stage1
+    uses: ./.github/workflows/stage2-integration.yml
+    secrets: inherit
+    with:
+      control_plane_id: ${{ needs.stage1.outputs.control_plane_id }}
+      upstream_url: ${{ inputs.upstream_url || 'https://asia-bosker-renna.ngrok-free.dev/fhir' }}
+  
+  stage3:
+    name: Stage 3 - API Spec Testing
+    needs: stage2
+    uses: ./.github/workflows/stage3-api-spec-testing.yml
+  
+  stage4:
+    name: Stage 4 - API Product
+    needs: [stage1, stage2, stage3]
+    uses: ./.github/workflows/stage4-api-product.yml
+    secrets: inherit
+    with:
+      control_plane_id: ${{ needs.stage1.outputs.control_plane_id }}
+      service_id: ${{ needs.stage2.outputs.service_id }}
+      rate_limit_per_minute: 5
+  
+  stage5:
+    name: Stage 5 - Developer Portal
+    needs: stage4
+    uses: ./.github/workflows/stage5-developer-portal.yml
+    secrets: inherit
+    with:
+      catalog_api_id: ${{ needs.stage4.outputs.catalog_api_id }}
+      portal_name: 'patient-records-portal-v2'
+      portal_display_name: 'Patient Records Developer Portal'
+      enable_auth: false

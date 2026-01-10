@@ -1,0 +1,125 @@
+name: Stage 4 - API Product
+
+on:
+  workflow_dispatch:
+    inputs:
+      control_plane_id:
+        description: 'Control Plane ID from Stage 1'
+        required: true
+        type: string
+      service_id:
+        description: 'Service ID from Stage 2'
+        required: true
+        type: string
+      rate_limit_per_minute:
+        description: 'Rate limit (requests per minute)'
+        required: false
+        type: number
+        default: 5
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: ["Stage 3 - API Spec Testing"]
+    types:
+      - completed
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  api-product:
+    name: Deploy API Product
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    
+    outputs:
+      catalog_service_id: ${{ steps.terraform.outputs.catalog_service_id }}
+      catalog_api_id: ${{ steps.terraform.outputs.catalog_api_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Download Stage 1 outputs
+        if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
+        uses: actions/download-artifact@v4
+        with:
+          name: stage1-outputs
+          path: terraform/stages/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Download Stage 2 outputs
+        if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
+        uses: actions/download-artifact@v4
+        with:
+          name: stage2-outputs
+          path: terraform/stages/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Deploy API Product
+        if: ${{ !inputs.destroy }}
+        id: terraform
+        working-directory: terraform/stages/4-api-product
+        run: |
+          # Get IDs from inputs or artifacts
+          if [ -n "${{ inputs.control_plane_id }}" ]; then
+            CONTROL_PLANE_ID="${{ inputs.control_plane_id }}"
+            SERVICE_ID="${{ inputs.service_id }}"
+          else
+            CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+            SERVICE_ID=$(jq -r '.service_id.value' ../stage2-outputs.json)
+          fi
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token         = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id      = "$CONTROL_PLANE_ID"
+          service_id            = "$SERVICE_ID"
+          rate_limit_per_minute = ${{ inputs.rate_limit_per_minute || 5 }}
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          
+          # Capture outputs
+          CATALOG_SERVICE_ID=$(terraform output -json | jq -r '.catalog_service_id.value')
+          CATALOG_API_ID=$(terraform output -json | jq -r '.catalog_api_id.value')
+          
+          echo "catalog_service_id=$CATALOG_SERVICE_ID" >> $GITHUB_OUTPUT
+          echo "catalog_api_id=$CATALOG_API_ID" >> $GITHUB_OUTPUT
+          
+          # Save outputs for artifact
+          terraform output -json > stage4-outputs.json
+      
+      - name: Upload outputs
+        if: ${{ !inputs.destroy }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage4-outputs
+          path: terraform/stages/4-api-product/stage4-outputs.json
+          retention-days: 1
+      
+      - name: Destroy API Product
+        if: ${{ inputs.destroy }}
+        working-directory: terraform/stages/4-api-product
+        run: |
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve \
+            -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
+            -var="control_plane_id=${{ inputs.control_plane_id }}" \
+            -var="service_id=${{ inputs.service_id }}"

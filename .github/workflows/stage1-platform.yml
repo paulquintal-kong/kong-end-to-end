@@ -1,0 +1,86 @@
+name: Stage 1 - Platform
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment name'
+        required: false
+        type: string
+        default: 'production'
+      project_name:
+        description: 'Project name'
+        required: false
+        type: string
+        default: 'fhir-patient-records'
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  platform:
+    name: Deploy Control Plane
+    runs-on: ubuntu-latest
+    
+    outputs:
+      control_plane_id: ${{ steps.terraform.outputs.control_plane_id }}
+      control_plane_endpoint: ${{ steps.terraform.outputs.control_plane_endpoint }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Deploy Platform
+        if: ${{ !inputs.destroy }}
+        id: terraform
+        working-directory: terraform/stages/1-platform
+        run: |
+          cat > terraform.tfvars <<EOF
+          konnect_token = "${{ secrets.KONNECT_TOKEN }}"
+          environment   = "${{ inputs.environment }}"
+          project_name  = "${{ inputs.project_name }}"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          
+          # Capture outputs
+          CONTROL_PLANE_ID=$(terraform output -json | jq -r '.control_plane_id.value')
+          CONTROL_PLANE_ENDPOINT=$(terraform output -json | jq -r '.control_plane_endpoint.value')
+          
+          echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
+          echo "control_plane_endpoint=$CONTROL_PLANE_ENDPOINT" >> $GITHUB_OUTPUT
+          
+          # Save outputs for artifact
+          terraform output -json > stage1-outputs.json
+      
+      - name: Upload outputs
+        if: ${{ !inputs.destroy }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-outputs
+          path: terraform/stages/1-platform/stage1-outputs.json
+          retention-days: 1
+      
+      - name: Destroy Platform
+        if: ${{ inputs.destroy }}
+        working-directory: terraform/stages/1-platform
+        run: |
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}"

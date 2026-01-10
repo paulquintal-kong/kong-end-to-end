@@ -1,0 +1,114 @@
+name: Stage 5 - Developer Portal
+
+on:
+  workflow_dispatch:
+    inputs:
+      catalog_api_id:
+        description: 'Catalog API ID from Stage 4'
+        required: true
+        type: string
+      portal_name:
+        description: 'Portal name (lowercase, dashes only)'
+        required: false
+        type: string
+        default: 'patient-records-portal-v2'
+      portal_display_name:
+        description: 'Portal display name'
+        required: false
+        type: string
+        default: 'Patient Records Developer Portal'
+      enable_auth:
+        description: 'Require authentication'
+        required: false
+        type: boolean
+        default: false
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: ["Stage 4 - API Product"]
+    types:
+      - completed
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  developer-portal:
+    name: Deploy Developer Portal
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    
+    outputs:
+      portal_id: ${{ steps.terraform.outputs.portal_id }}
+      portal_url: ${{ steps.terraform.outputs.portal_url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Download Stage 4 outputs
+        if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
+        uses: actions/download-artifact@v4
+        with:
+          name: stage4-outputs
+          path: terraform/stages/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Deploy Developer Portal
+        if: ${{ !inputs.destroy }}
+        id: terraform
+        working-directory: terraform/stages/5-developer-portal
+        run: |
+          # Get catalog API ID from input or artifact
+          if [ -n "${{ inputs.catalog_api_id }}" ]; then
+            CATALOG_API_ID="${{ inputs.catalog_api_id }}"
+          else
+            CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage4-outputs.json)
+          fi
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
+          catalog_api_id          = "$CATALOG_API_ID"
+          portal_name             = "${{ inputs.portal_name }}"
+          portal_display_name     = "${{ inputs.portal_display_name }}"
+          enable_auth             = ${{ inputs.enable_auth }}
+          auto_approve_developers = false
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          
+          # Capture outputs
+          PORTAL_ID=$(terraform output -json | jq -r '.portal_id.value')
+          PORTAL_URL=$(terraform output -json | jq -r '.portal_url.value')
+          
+          echo "portal_id=$PORTAL_ID" >> $GITHUB_OUTPUT
+          echo "portal_url=$PORTAL_URL" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "🎉 Developer Portal deployed!"
+          echo "Portal URL: $PORTAL_URL"
+      
+      - name: Destroy Developer Portal
+        if: ${{ inputs.destroy }}
+        working-directory: terraform/stages/5-developer-portal
+        run: |
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve \
+            -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
+            -var="catalog_api_id=${{ inputs.catalog_api_id }}"

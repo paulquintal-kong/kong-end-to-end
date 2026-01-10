@@ -1,0 +1,112 @@
+name: Stage 2 - Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      control_plane_id:
+        description: 'Control Plane ID from Stage 1'
+        required: true
+        type: string
+      upstream_url:
+        description: 'Upstream FHIR server URL'
+        required: false
+        type: string
+        default: 'https://asia-bosker-renna.ngrok-free.dev/fhir'
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: ["Stage 1 - Platform"]
+    types:
+      - completed
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  integration:
+    name: Deploy Gateway Service
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    
+    outputs:
+      service_id: ${{ steps.terraform.outputs.service_id }}
+      route_id: ${{ steps.terraform.outputs.route_id }}
+      api_endpoint: ${{ steps.terraform.outputs.api_endpoint }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Download Stage 1 outputs
+        if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
+        uses: actions/download-artifact@v4
+        with:
+          name: stage1-outputs
+          path: terraform/stages/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Deploy Integration
+        if: ${{ !inputs.destroy }}
+        id: terraform
+        working-directory: terraform/stages/2-integration
+        run: |
+          # Get control plane ID from input or artifact
+          if [ -n "${{ inputs.control_plane_id }}" ]; then
+            CONTROL_PLANE_ID="${{ inputs.control_plane_id }}"
+          else
+            CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+          fi
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token    = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id = "$CONTROL_PLANE_ID"
+          upstream_url     = "${{ inputs.upstream_url }}"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          
+          # Capture outputs
+          SERVICE_ID=$(terraform output -json | jq -r '.service_id.value')
+          ROUTE_ID=$(terraform output -json | jq -r '.route_id.value')
+          API_ENDPOINT=$(terraform output -json | jq -r '.api_endpoint.value')
+          
+          echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+          echo "route_id=$ROUTE_ID" >> $GITHUB_OUTPUT
+          echo "api_endpoint=$API_ENDPOINT" >> $GITHUB_OUTPUT
+          
+          # Save outputs for artifact
+          terraform output -json > stage2-outputs.json
+      
+      - name: Upload outputs
+        if: ${{ !inputs.destroy }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-outputs
+          path: terraform/stages/2-integration/stage2-outputs.json
+          retention-days: 1
+      
+      - name: Destroy Integration
+        if: ${{ inputs.destroy }}
+        working-directory: terraform/stages/2-integration
+        run: |
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve \
+            -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
+            -var="control_plane_id=${{ inputs.control_plane_id }}" \
+            -var="upstream_url=dummy"

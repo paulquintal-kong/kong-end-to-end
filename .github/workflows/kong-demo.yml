@@ -69,22 +69,6 @@ jobs:
           terraform apply -auto-approve
           terraform output -json > ../stage2-outputs.json
       
-      - name: Stage 3 - API Spec Testing
-        if: ${{ !inputs.destroy }}
-        run: |
-          echo "Stage 3: API Spec Development & Testing"
-          echo "========================================"
-          echo ""
-          echo "This stage validates the OpenAPI specification."
-          echo "In a full workflow, this would run:"
-          echo "  - OpenAPI spec linting with Spectral"
-          echo "  - FHIR compliance validation"
-          echo "  - Insomnia test collection execution"
-          echo ""
-          echo "Skipping in CI/CD - requires Insomnia workspace setup."
-          echo "Run locally: cd terraform/stages/3-api-spec-testing && ./demo.sh"
-          echo ""
-      
       - name: Stage 4 - API Product
         if: ${{ !inputs.destroy }}
         working-directory: terraform/stages/4-api-product
@@ -102,19 +86,19 @@ jobs:
           terraform init -backend-config=backend-azure.tfbackend
           terraform plan
           terraform apply -auto-approve
-          terraform output -json > ../stage4-outputs.json
+          terraform output -json > ../stage3-outputs.json
       
       - name: Stage 5 - Developer Portal
         if: ${{ !inputs.destroy }}
         working-directory: terraform/stages/5-developer-portal
         run: |
-          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage4-outputs.json)
+          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage3-outputs.json)
           
           cat > terraform.tfvars <<EOF
           konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
           catalog_api_id          = "$CATALOG_API_ID"
-          portal_name             = "patient-records-portal-v2"
-          portal_display_name     = "Patient Records Developer Portal"
+          portal_name             = "Patient Records API"
+          portal_display_name     = "Developer Portal"
           enable_auth             = false
           auto_approve_developers = false
           EOF
