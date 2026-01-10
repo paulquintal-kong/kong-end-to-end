@@ -47,21 +47,53 @@ Before running the demo, ensure you have:
 
 ## Quick Start
 
-### Run the Complete Demo
+### 1. Initialize Demo Environment
+
+**Run the initialization script first** to verify your environment:
 
 ```bash
-# 1. Set your Kong Konnect token
+./init-demo.sh
+```
+
+This script automatically checks:
+- ✅ Required CLI tools (terraform, jq, curl, docker)
+- ✅ Optional tools (gh, aws, az, ngrok)
+- ✅ Environment variables (KONNECT_TOKEN)
+- ✅ Cloud backend configuration (AWS S3 or Azure Storage)
+- ✅ Terraform backend files
+- ✅ Docker daemon status
+
+**Setup instructions** if checks fail:
+```bash
+# Set Kong Konnect token
 export KONNECT_TOKEN="your-personal-access-token-here"
 
-# 2. Run each stage sequentially
+# Configure cloud backend (choose one):
+# AWS:
+export AWS_ACCESS_KEY_ID="your-key"
+export AWS_SECRET_ACCESS_KEY="your-secret"
+
+# OR Azure:
+az login
+# or export ARM_ACCESS_KEY="your-storage-key"
+```
+
+See [terraform/BACKEND-CONFIG.md](terraform/BACKEND-CONFIG.md) for detailed backend setup.
+
+---
+
+### 2. Run the Complete Demo
+
+```bash
+# Run each stage sequentially
 cd terraform/stages/1-platform && ./demo.sh
 cd ../2-integration && ./demo.sh
 cd ../3-api-spec-testing && ./demo.sh
 cd ../4-api-product && ./demo.sh
 cd ../5-developer-portal && ./demo.sh
 
-# 3. Open the developer portal
-# URL provided in Stage 4 output
+# Open the developer portal
+# URL provided in Stage 5 output
 ```
 
 Each `demo.sh` script:

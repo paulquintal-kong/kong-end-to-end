@@ -19,6 +19,30 @@ fi
 
 cd "$(dirname "$0")"
 
+# Backend selection
+echo "📦 Select Terraform backend:"
+echo "   1) AWS S3"
+echo "   2) Azure Storage"
+read -p "Choose backend (1 or 2): " backend_choice
+
+case $backend_choice in
+    1)
+        BACKEND_CONFIG="backend-aws.tfbackend"
+        echo "✓ Using AWS S3 backend"
+        echo "  Ensure AWS credentials are configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)"
+        ;;
+    2)
+        BACKEND_CONFIG="backend-azure.tfbackend"
+        echo "✓ Using Azure Storage backend"
+        echo "  Ensure Azure credentials are configured (ARM_ACCESS_KEY or Azure CLI)"
+        ;;
+    *)
+        echo "❌ Invalid choice"
+        exit 1
+        ;;
+esac
+echo ""
+
 # Create terraform.tfvars
 echo "📝 Creating terraform.tfvars..."
 cat > terraform.tfvars <<EOF
@@ -30,7 +54,7 @@ EOF
 # Initialize Terraform
 echo ""
 echo "🔧 Initializing Terraform..."
-terraform init
+terraform init -backend-config="$BACKEND_CONFIG" -reconfigure
 
 # Plan
 echo ""

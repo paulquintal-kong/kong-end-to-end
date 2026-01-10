@@ -20,11 +20,11 @@ terraform {
     }
   }
   
-  backend "s3" {
-    bucket = "kong-fhir-tfstate"
-    key    = "stage1-platform/terraform.tfstate"
-    region = "ap-southeast-2"
-  }
+  # Backend configuration provided via:
+  # - AWS S3: terraform init -backend-config=backend-aws.tfbackend
+  # - Azure: terraform init -backend-config=backend-azure.tfbackend
+  # Use -reconfigure flag when switching backends
+  backend "s3" {}
 }
 
 provider "konnect" {

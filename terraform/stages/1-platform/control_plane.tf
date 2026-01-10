@@ -11,14 +11,13 @@
 
 resource "konnect_gateway_control_plane" "fhir_control_plane" {
   name        = "FHIR Patient Records Control Plane"
-  description = "Control plane for FHIR R4 Patient Records API - manages routing, policies, and data plane configuration"
+  description = "Control plane for FHIR-based Patient Records API services"
   
   cluster_type = "CLUSTER_TYPE_CONTROL_PLANE"
   
   labels = {
-    environment = var.environment
-    project     = var.project_name
-    team        = "platform-engineering"
-    api_domain  = "healthcare"
+    environment = "development"
+    team        = "healthcare"
+    api_type    = "fhir"
   }
 }

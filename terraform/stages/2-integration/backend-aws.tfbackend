@@ -1,0 +1,3 @@
+bucket = "kong-fhir-tfstate"
+key    = "stage2-integration/terraform.tfstate"
+region = "ap-southeast-2"

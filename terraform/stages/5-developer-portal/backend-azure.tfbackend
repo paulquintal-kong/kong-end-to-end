@@ -1,0 +1,4 @@
+resource_group_name  = "kong-terraform-state"
+storage_account_name = "kongfhirtfstate"
+container_name       = "tfstate"
+key                  = "stage5-developer-portal/terraform.tfstate"

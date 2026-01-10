@@ -1,0 +1,40 @@
+{
+  "api_endpoint": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://7ad8805d-3f7f-423f-9ceb-66c31882c5f4.au.cp0.konghq.com/api/patients"
+  },
+  "route_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "864d1f74-e4c2-4256-8ba1-1d5411619748"
+  },
+  "service_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "a1686369-e8cc-419c-8657-2b35cdae619c"
+  },
+  "service_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "Patient-Records-API"
+  },
+  "stage2_outputs": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "api_endpoint": "string",
+        "route_id": "string",
+        "service_id": "string",
+        "service_name": "string"
+      }
+    ],
+    "value": {
+      "api_endpoint": "https://7ad8805d-3f7f-423f-9ceb-66c31882c5f4.au.cp0.konghq.com/api/patients",
+      "route_id": "864d1f74-e4c2-4256-8ba1-1d5411619748",
+      "service_id": "a1686369-e8cc-419c-8657-2b35cdae619c",
+      "service_name": "Patient-Records-API"
+    }
+  }
+}

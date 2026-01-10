@@ -30,6 +30,30 @@ CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage3-outputs.json)
 echo "📥 Using Catalog API ID from Stage 3: $CATALOG_API_ID"
 echo ""
 
+# Backend selection
+echo "📦 Select Terraform backend:"
+echo "   1) AWS S3"
+echo "   2) Azure Storage"
+read -p "Choose backend (1 or 2): " backend_choice
+
+case $backend_choice in
+    1)
+        BACKEND_CONFIG="backend-aws.tfbackend"
+        echo "✓ Using AWS S3 backend"
+        echo "  Ensure AWS credentials are configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)"
+        ;;
+    2)
+        BACKEND_CONFIG="backend-azure.tfbackend"
+        echo "✓ Using Azure Storage backend"
+        echo "  Ensure Azure credentials are configured (ARM_ACCESS_KEY or Azure CLI)"
+        ;;
+    *)
+        echo "❌ Invalid choice"
+        exit 1
+        ;;
+esac
+echo ""
+
 # Portal configuration options
 echo "🎛️  Portal Configuration Options:"
 echo ""
@@ -60,7 +84,7 @@ EOF
 # Initialize
 echo ""
 echo "🔧 Initializing Terraform..."
-terraform init
+terraform init -backend-config="$BACKEND_CONFIG" -reconfigure
 
 # Plan
 echo ""
