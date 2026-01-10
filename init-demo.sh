@@ -628,13 +628,13 @@ if [ $CHECKS_FAILED -eq 0 ]; then
         if command -v gh &> /dev/null; then
             # Check if we're in a git repo
             if git rev-parse --git-dir > /dev/null 2>&1; then
-                echo -e "${BLUE}Setting up GitHub Actions workflow...${NC}"
+                echo -e "${BLUE}Configuring GitHub Actions workflow...${NC}"
+                echo -e "${GREEN}✓${NC} Stage-specific workflows already exist"
                 
-                # Create .github/workflows directory if it doesn't exist
-                mkdir -p .github/workflows
+                # Skip workflow generation - workflows already exist
+                # Workflows: stage1-platform.yml, stage2-integration.yml, etc.
                 
-                # Create workflow file
-                cat > .github/workflows/kong-demo.yml <<'WORKFLOW_EOF'
+                : <<'WORKFLOW_EOF'
 name: Kong Demo Deployment
 
 on:
@@ -766,7 +766,7 @@ jobs:
           terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" || true
 WORKFLOW_EOF
                 
-                echo -e "${GREEN}✓${NC} Created GitHub Actions workflow: .github/workflows/kong-demo.yml"
+                echo -e "${GREEN}✓${NC} GitHub Actions workflows ready (stage1-platform.yml, stage2-integration.yml, etc.)"
                 
                 # Set GitHub secrets
                 echo ""
@@ -787,16 +787,22 @@ WORKFLOW_EOF
                 
                 echo ""
                 echo -e "${CYAN}Next Steps:${NC}"
-                echo -e "  1. Review workflow: ${YELLOW}.github/workflows/kong-demo.yml${NC}"
-                echo -e "  2. Commit and push changes:"
-                echo -e "     ${YELLOW}git add .github/workflows/kong-demo.yml${NC}"
-                echo -e "     ${YELLOW}git commit -m \"Add Kong demo workflow\"${NC}"
-                echo -e "     ${YELLOW}git push${NC}"
-                echo -e "  3. Watch the workflow run: ${YELLOW}gh run watch${NC}"
-                echo -e "  4. Or trigger manually: ${YELLOW}gh workflow run kong-demo.yml${NC}"
+                echo -e "  1. Run Stage 1 - Platform:"
+                echo -e "     ${YELLOW}gh workflow run stage1-platform.yml${NC}"
+                echo -e "  2. Watch the workflow: ${YELLOW}gh run watch${NC}"
+                echo -e "  3. Or run all stages:"
+                echo -e "     ${YELLOW}gh workflow run deploy-all-stages.yml${NC}"
+                echo ""
+                echo -e "${CYAN}Workflows available:${NC}"
+                echo -e "  • stage1-platform.yml       (Control Plane)"
+                echo -e "  • stage2-integration.yml    (Gateway Service)"
+                echo -e "  • stage3-api-spec-testing.yml (API Validation)"
+                echo -e "  • stage4-api-product.yml    (API Catalog)"
+                echo -e "  • stage5-developer-portal.yml (Developer Portal)"
+                echo -e "  • deploy-all-stages.yml     (Run all stages)"
                 echo ""
                 echo -e "${CYAN}To destroy infrastructure:${NC}"
-                echo -e "  ${YELLOW}gh workflow run kong-demo.yml -f destroy=true${NC}"
+                echo -e "  ${YELLOW}gh workflow run destroy-all-stages.yml${NC}"
                 
             else
                 echo -e "${RED}✗${NC} Not a git repository"
@@ -805,7 +811,7 @@ WORKFLOW_EOF
         else
             echo -e "${YELLOW}⚠${NC} GitHub CLI not installed"
             echo -e "   ${YELLOW}Install with:${NC} brew install gh"
-            echo -e "   ${YELLOW}Or manually create workflow in:${NC} .github/workflows/kong-demo.yml"
+            echo -e "   ${YELLOW}Workflows already exist in:${NC} .github/workflows/stage*.yml"
         fi
         
         echo ""
