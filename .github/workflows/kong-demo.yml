@@ -113,8 +113,8 @@ jobs:
           cat > terraform.tfvars <<EOF
           konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
           catalog_api_id          = "$CATALOG_API_ID"
-          portal_name             = "Patient Records API"
-          portal_display_name     = "Developer Portal"
+          portal_name             = "patient-records-portal-v2"
+          portal_display_name     = "Patient Records Developer Portal"
           enable_auth             = false
           auto_approve_developers = false
           EOF
