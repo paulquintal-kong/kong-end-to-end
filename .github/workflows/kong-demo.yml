@@ -1,0 +1,129 @@
+name: Kong Demo Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/kong-demo.yml'
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  TF_VERSION: '1.14.3'
+
+jobs:
+  deploy:
+    name: Deploy Kong Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure Azure credentials
+        run: |
+          echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Stage 1 - Platform
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/1-platform
+        run: |
+          cat > terraform.tfvars <<EOF
+          konnect_token = "${{ secrets.KONNECT_TOKEN }}"
+          environment   = "production"
+          project_name  = "fhir-patient-records"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage1-outputs.json
+      
+      - name: Stage 2 - Integration
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/2-integration
+        run: |
+          CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token    = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id = "$CONTROL_PLANE_ID"
+          upstream_url     = "https://asia-bosker-renna.ngrok-free.dev/fhir"
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage2-outputs.json
+      
+      - name: Stage 4 - API Product
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/4-api-product
+        run: |
+          CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
+          SERVICE_ID=$(jq -r '.service_id.value' ../stage2-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token         = "${{ secrets.KONNECT_TOKEN }}"
+          control_plane_id      = "$CONTROL_PLANE_ID"
+          service_id            = "$SERVICE_ID"
+          rate_limit_per_minute = 5
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+          terraform output -json > ../stage3-outputs.json
+      
+      - name: Stage 5 - Developer Portal
+        if: ${{ !inputs.destroy }}
+        working-directory: terraform/stages/5-developer-portal
+        run: |
+          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage3-outputs.json)
+          
+          cat > terraform.tfvars <<EOF
+          konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
+          catalog_api_id          = "$CATALOG_API_ID"
+          portal_name             = "Patient Records API"
+          portal_display_name     = "Developer Portal"
+          enable_auth             = false
+          auto_approve_developers = false
+          EOF
+          
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform plan
+          terraform apply -auto-approve
+      
+      - name: Destroy Infrastructure
+        if: ${{ inputs.destroy }}
+        run: |
+          echo "Destroying infrastructure in reverse order..."
+          
+          cd terraform/stages/5-developer-portal
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="catalog_api_id=dummy" || true
+          
+          cd ../4-api-product
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="control_plane_id=dummy" -var="service_id=dummy" || true
+          
+          cd ../2-integration
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" -var="control_plane_id=dummy" -var="upstream_url=dummy" || true
+          
+          cd ../1-platform
+          terraform init -backend-config=backend-azure.tfbackend
+          terraform destroy -auto-approve -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" || true
