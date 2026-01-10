@@ -69,6 +69,22 @@ jobs:
           terraform apply -auto-approve
           terraform output -json > ../stage2-outputs.json
       
+      - name: Stage 3 - API Spec Testing
+        if: ${{ !inputs.destroy }}
+        run: |
+          echo "Stage 3: API Spec Development & Testing"
+          echo "========================================"
+          echo ""
+          echo "This stage validates the OpenAPI specification."
+          echo "In a full workflow, this would run:"
+          echo "  - OpenAPI spec linting with Spectral"
+          echo "  - FHIR compliance validation"
+          echo "  - Insomnia test collection execution"
+          echo ""
+          echo "Skipping in CI/CD - requires Insomnia workspace setup."
+          echo "Run locally: cd terraform/stages/3-api-spec-testing && ./demo.sh"
+          echo ""
+      
       - name: Stage 4 - API Product
         if: ${{ !inputs.destroy }}
         working-directory: terraform/stages/4-api-product
@@ -86,13 +102,13 @@ jobs:
           terraform init -backend-config=backend-azure.tfbackend
           terraform plan
           terraform apply -auto-approve
-          terraform output -json > ../stage3-outputs.json
+          terraform output -json > ../stage4-outputs.json
       
       - name: Stage 5 - Developer Portal
         if: ${{ !inputs.destroy }}
         working-directory: terraform/stages/5-developer-portal
         run: |
-          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage3-outputs.json)
+          CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage4-outputs.json)
           
           cat > terraform.tfvars <<EOF
           konnect_token           = "${{ secrets.KONNECT_TOKEN }}"

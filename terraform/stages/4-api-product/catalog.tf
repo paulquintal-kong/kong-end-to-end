@@ -7,21 +7,15 @@
 # ========================================================================
 
 resource "konnect_catalog_service" "fhir_patient_catalog" {
-  name        = "Patient Records API"
-  description = "FHIR R4 compliant API for managing patient medical records and health information"
+  name         = "Patient Records API"
+  display_name = "Patient Records API"
+  description  = "FHIR R4 compliant API for managing patient medical records and health information"
   
   labels = {
     domain      = "healthcare"
     standard    = "fhir-r4"
     compliance  = "hipaa-ready"
     owner       = "api-product-team"
-  }
-  
-  custom_fields = {
-    api_owner        = "healthcare-api-team@example.com"
-    sla_tier         = "gold"
-    support_channel  = "#healthcare-apis"
-    documentation    = "https://hl7.org/fhir/R4/"
   }
 }
 
