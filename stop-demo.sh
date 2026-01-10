@@ -155,33 +155,53 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
                     
                     # Check if terraform state exists
                     if [ -d ".terraform" ] || [ -f "terraform.tfstate" ]; then
-                        # Select backend
-                        echo -e "${YELLOW}Select backend for $STAGE:${NC}"
-                        echo "   1) AWS S3"
-                        echo "   2) Azure Storage"
-                        echo "   3) Skip this stage"
-                        read -p "Choose (1/2/3): " backend_choice
+                        # Load backend type from config file
+                        BACKEND_TYPE=""
+                        if [ -f "../../.demo-config" ]; then
+                            source ../../.demo-config
+                            echo -e "${CYAN}Using backend: $BACKEND_TYPE (from .demo-config)${NC}"
+                        fi
                         
-                        case $backend_choice in
-                            1)
+                        if [ -z "$BACKEND_TYPE" ]; then
+                            # Fallback to asking if config doesn't exist
+                            echo -e "${YELLOW}Select backend for $STAGE:${NC}"
+                            echo "   1) AWS S3"
+                            echo "   2) Azure Storage"
+                            echo "   3) Skip this stage"
+                            read -p "Choose (1/2/3): " backend_choice
+                            
+                            case $backend_choice in
+                                1) BACKEND_TYPE="aws" ;;
+                                2) BACKEND_TYPE="azure" ;;
+                                3)
+                                    echo -e "${YELLOW}⊘${NC} Skipped $STAGE"
+                                    cd - > /dev/null
+                                    continue
+                                    ;;
+                                *)
+                                        echo -e "${RED}✗${NC} Invalid choice, skipping"
+                                    cd - > /dev/null
+                                    continue
+                                    ;;
+                            esac
+                        fi
+                        
+                        # Set backend config based on type
+                        case $BACKEND_TYPE in
+                            aws)
                                 BACKEND_CONFIG="backend-aws.tfbackend"
-                                terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
                                 ;;
-                            2)
+                            azure)
                                 BACKEND_CONFIG="backend-azure.tfbackend"
-                                terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
-                                ;;
-                            3)
-                                echo -e "${YELLOW}⊘${NC} Skipped $STAGE"
-                                cd - > /dev/null
-                                continue
                                 ;;
                             *)
-                                echo -e "${RED}✗${NC} Invalid choice, skipping"
+                                echo -e "${RED}✗${NC} Unknown backend type: $BACKEND_TYPE"
                                 cd - > /dev/null
                                 continue
                                 ;;
                         esac
+                        
+                        terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
                         
                         # Run terraform destroy
                         if terraform destroy -auto-approve > /dev/null 2>&1; then

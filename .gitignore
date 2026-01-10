@@ -6,6 +6,9 @@
 # Ngrok files
 .ngrok*
 
+# Demo configuration (contains backend choice)
+.demo-config
+
 # Kong certificates (contains sensitive cluster certificates)
 .kong/
 

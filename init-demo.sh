@@ -433,6 +433,10 @@ if [ "$BACKEND_SELECTED" = "none" ]; then
                 echo -e "   ${YELLOW}echo 'export AWS_SECRET_ACCESS_KEY=\"$aws_secret\"' >> ~/.zshrc${NC}"
                 BACKEND_SELECTED="aws"
                 
+                # Save backend selection to config file
+                echo "BACKEND_TYPE=aws" > .demo-config
+                echo -e "   ${GREEN}✓${NC} Backend configuration saved to .demo-config"
+                
                 # Offer to create S3 bucket
                 if command -v aws &> /dev/null; then
                     echo ""
@@ -457,6 +461,10 @@ if [ "$BACKEND_SELECTED" = "none" ]; then
                 if [ $? -eq 0 ]; then
                     echo -e "   ${GREEN}✓${NC} Azure login successful"
                     BACKEND_SELECTED="azure"
+                    
+                    # Save backend selection to config file
+                    echo "BACKEND_TYPE=azure" > .demo-config
+                    echo -e "   ${GREEN}✓${NC} Backend configuration saved to .demo-config"
                     
                     # Offer to create storage resources
                     echo ""
@@ -491,6 +499,12 @@ if [ "$BACKEND_SELECTED" = "none" ]; then
     echo ""
 else
     echo -e "${GREEN}✓${NC} Backend Selected: ${CYAN}$BACKEND_SELECTED${NC}"
+    
+    # Save backend selection to config file if not already saved
+    if [ ! -f ".demo-config" ]; then
+        echo "BACKEND_TYPE=$BACKEND_SELECTED" > .demo-config
+        echo -e "${GREEN}✓${NC} Backend configuration saved to .demo-config"
+    fi
 fi
 
 echo ""
