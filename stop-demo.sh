@@ -117,6 +117,109 @@ fi
 echo ""
 
 # ========================================================================
+# 4. Remove Kong Control Plane and Configurations (optional)
+# ========================================================================
+echo -e "${BLUE}4. Kong Konnect Cleanup...${NC}"
+
+read -p "Remove Kong control plane and all configurations? (y/n): " cleanup_kong
+if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo -e "${YELLOW}This will destroy all Kong resources created by Terraform:${NC}"
+    echo -e "  - Control Plane"
+    echo -e "  - Gateway Services"
+    echo -e "  - Routes"
+    echo -e "  - Plugins"
+    echo -e "  - API Products"
+    echo -e "  - Developer Portal"
+    echo ""
+    read -p "Are you sure? (yes/no): " confirm_destroy
+    
+    if [ "$confirm_destroy" = "yes" ]; then
+        # Check if KONNECT_TOKEN is set
+        if [ -z "$KONNECT_TOKEN" ]; then
+            echo -e "${RED}✗${NC} KONNECT_TOKEN not set"
+            echo -e "   ${YELLOW}Set with:${NC} export KONNECT_TOKEN='your-token'"
+        else
+            echo -e "${CYAN}Destroying Kong resources...${NC}"
+            echo ""
+            
+            # Destroy in reverse order (5 -> 4 -> 2 -> 1)
+            STAGES=("5-developer-portal" "4-api-product" "2-integration" "1-platform")
+            
+            for STAGE in "${STAGES[@]}"; do
+                STAGE_PATH="terraform/stages/$STAGE"
+                
+                if [ -d "$STAGE_PATH" ]; then
+                    echo -e "${CYAN}Processing stage: $STAGE${NC}"
+                    cd "$STAGE_PATH"
+                    
+                    # Check if terraform state exists
+                    if [ -d ".terraform" ] || [ -f "terraform.tfstate" ]; then
+                        # Select backend
+                        echo -e "${YELLOW}Select backend for $STAGE:${NC}"
+                        echo "   1) AWS S3"
+                        echo "   2) Azure Storage"
+                        echo "   3) Skip this stage"
+                        read -p "Choose (1/2/3): " backend_choice
+                        
+                        case $backend_choice in
+                            1)
+                                BACKEND_CONFIG="backend-aws.tfbackend"
+                                terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
+                                ;;
+                            2)
+                                BACKEND_CONFIG="backend-azure.tfbackend"
+                                terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
+                                ;;
+                            3)
+                                echo -e "${YELLOW}⊘${NC} Skipped $STAGE"
+                                cd - > /dev/null
+                                continue
+                                ;;
+                            *)
+                                echo -e "${RED}✗${NC} Invalid choice, skipping"
+                                cd - > /dev/null
+                                continue
+                                ;;
+                        esac
+                        
+                        # Run terraform destroy
+                        if terraform destroy -auto-approve > /dev/null 2>&1; then
+                            echo -e "${GREEN}✓${NC} Destroyed $STAGE resources"
+                            
+                            # Clean up local terraform files
+                            rm -rf .terraform
+                            rm -f terraform.tfstate*
+                            rm -f .terraform.lock.hcl
+                            echo -e "${GREEN}✓${NC} Cleaned up $STAGE terraform files"
+                        else
+                            echo -e "${YELLOW}⚠${NC} Failed to destroy $STAGE (may not exist or already destroyed)"
+                        fi
+                    else
+                        echo -e "${CYAN}ℹ${NC} $STAGE - No terraform state found"
+                    fi
+                    
+                    cd - > /dev/null
+                    echo ""
+                fi
+            done
+            
+            # Clean up output files
+            rm -f terraform/stages/stage*.json
+            echo -e "${GREEN}✓${NC} Cleaned up stage output files"
+            
+            ((STOPPED_SERVICES++))
+        fi
+    else
+        echo -e "${CYAN}ℹ${NC} Kong cleanup cancelled"
+    fi
+else
+    echo -e "${CYAN}ℹ${NC} Skipping Kong cleanup"
+fi
+
+echo ""
+
+# ========================================================================
 # Summary
 # ========================================================================
 echo -e "${GREEN}==========================================${NC}"

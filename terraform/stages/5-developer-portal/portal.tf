@@ -42,20 +42,6 @@ resource "konnect_portal" "developer_portal" {
 }
 
 # ========================================================================
-# Portal Outputs for 3rd Party Developer Experience
-# ========================================================================
-
-output "portal_url" {
-  description = "Developer Portal URL - Share this with 3rd party developers"
-  value       = "https://${konnect_portal.developer_portal.default_domain}"
-}
-
-output "portal_id" {
-  description = "Portal ID"
-  value       = konnect_portal.developer_portal.id
-}
-
-# ========================================================================
 # Next Steps for Demo
 # ========================================================================
 # After running this stage, demonstrate the 3rd party developer experience:
