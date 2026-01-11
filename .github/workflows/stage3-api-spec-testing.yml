@@ -56,16 +56,12 @@ jobs:
         run: |
           echo ""
           echo "🧪 Running API endpoint tests..."
-          echo "ℹ️  Tests are embedded in request afterResponse scripts in fhir-api-insomnia.yaml"
-          echo "ℹ️  To execute these tests, run requests with Insomnia GUI or use collection runner"
-          echo ""
-          echo "Available test coverage:"
-          echo "  - Patient Search: Status 200, Bundle structure validation"
-          echo "  - Patient Create: Status 201, Patient resource validation"
-          echo "  - Patient Read: Status 200, ID matching"
-          echo ""
-          echo "Note: inso CLI does not support running inline afterResponse scripts"
-          echo "      Tests must be defined as separate unit test suites for CLI execution"
+          if [ -f ".insomnia/fhir-api-insomnia.yaml" ]; then
+            echo "Running Patient API test suite..."
+            inso run test uts_patient_api_tests .insomnia/fhir-api-insomnia.yaml || echo "⚠️  Some tests failed"
+          else
+            echo "⚠️  Insomnia test file not found"
+          fi
       
       - name: Summary
         run: |

@@ -1768,3 +1768,38 @@ spec:
     id: spc_19a9d3c01abb47448ed9cb899f8a8b35
     created: 1767666825784
     modified: 1767666825784
+test_suites:
+  - name: Patient API Tests
+    meta:
+      id: uts_patient_api_tests
+      created: 1736589600000
+      modified: 1736589600000
+    tests:
+      - name: Search for Patients - Status 200
+        meta:
+          id: ut_search_patients_200
+        code: |
+          const response = await insomnia.send('req_852290d298764ab89ed11772fccdb4b3');
+          expect(response.status).to.equal(200);
+      - name: Search for Patients - Valid Bundle
+        meta:
+          id: ut_search_patients_bundle
+        code: |
+          const response = await insomnia.send('req_852290d298764ab89ed11772fccdb4b3');
+          const body = JSON.parse(response.data);
+          expect(body.resourceType).to.equal('Bundle');
+          expect(body.entry[0].resource.resourceType).to.equal('Patient');
+      - name: Create Patient - Status 201
+        meta:
+          id: ut_create_patient_201
+        code: |
+          const response = await insomnia.send('req_1fa6958d8eda4b61a32502a128fbf6e2');
+          expect(response.status).to.equal(201);
+      - name: Create Patient - Valid Resource
+        meta:
+          id: ut_create_patient_resource
+        code: |
+          const response = await insomnia.send('req_1fa6958d8eda4b61a32502a128fbf6e2');
+          const body = JSON.parse(response.data);
+          expect(body.resourceType).to.equal('Patient');
+          expect(body.id).to.match(/^[0-9]+$/);
