@@ -35,6 +35,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Load demo configuration
+        id: load_config
+        run: |
+          if [ -f ".demo-state.json" ]; then
+            echo "✓ Found existing demo state configuration"
+            cat .demo-state.json
+          else
+            echo "⚠ No demo state found - creating default config"
+            cat > .demo-state.json <<EOF
+          {
+            "version": "1.0",
+            "updated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "execution_mode": "workflow",
+            "backend_type": "azure",
+            "ngrok_url": null,
+            "fhir_endpoint": null,
+            "control_plane_id": null,
+            "service_id": null,
+            "catalog_service_id": null,
+            "catalog_api_id": null,
+            "portal_id": null
+          }
+          EOF
+          fi
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -67,7 +92,18 @@ jobs:
           echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
           echo "control_plane_endpoint=$CONTROL_PLANE_ENDPOINT" >> $GITHUB_OUTPUT
           
+          # Update demo state config
+          cd ../../..
+          jq --arg cp_id "$CONTROL_PLANE_ID" \
+             --arg updated "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+             '.control_plane_id = $cp_id | .updated_at = $updated' \
+             .demo-state.json > .demo-state.json.tmp && mv .demo-state.json.tmp .demo-state.json
+          
+          echo "✓ Updated demo state with control_plane_id"
+          cat .demo-state.json
+          
           # Save outputs for artifact
+          cd terraform/stages/1-platform
           terraform output -json > stage1-outputs.json
       
       - name: Upload outputs
@@ -77,6 +113,14 @@ jobs:
           name: stage1-outputs
           path: terraform/stages/1-platform/stage1-outputs.json
           retention-days: 1
+      
+      - name: Upload demo state
+        if: ${{ !inputs.destroy }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-state
+          path: .demo-state.json
+          retention-days: 7
       
       - name: Destroy Platform
         if: ${{ inputs.destroy }}

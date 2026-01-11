@@ -690,8 +690,26 @@ if [ $CHECKS_FAILED -eq 0 ]; then
             echo -e "   ${CYAN}FHIR Endpoint:${NC} $NGROK_URL/fhir"
             echo "$NGROK_URL" > .ngrok-url.txt
             
+            # Save to demo state config
+            cat > .demo-state.json <<STATE_EOF
+{
+  "version": "1.0",
+  "updated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "execution_mode": "$EXECUTION_MODE",
+  "backend_type": "$BACKEND_SELECTED",
+  "ngrok_url": "$NGROK_URL",
+  "fhir_endpoint": "$NGROK_URL/fhir",
+  "control_plane_id": null,
+  "service_id": null,
+  "catalog_service_id": null,
+  "catalog_api_id": null,
+  "portal_id": null
+}
+STATE_EOF
+            
             echo ""
-            echo -e "${YELLOW}Important:${NC} Update your Stage 2 upstream_url to: ${CYAN}$NGROK_URL/fhir${NC}"
+            echo -e "${GREEN}✓${NC} Demo configuration saved to .demo-state.json"
+            echo -e "${YELLOW}Important:${NC} Workflows will automatically use this configuration"
         else
             echo -e "${YELLOW}⚠${NC} ngrok started but URL not available yet"
             echo -e "   ${YELLOW}Check URL with:${NC} curl http://localhost:4040/api/tunnels"

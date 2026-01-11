@@ -47,6 +47,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      \n      - name: Load demo configuration
+        id: load_config
+        run: |
+          if [ -f ".demo-state.json" ]; then
+            echo "✓ Found demo state configuration"
+            NGROK_URL=$(jq -r '.ngrok_url // "https://asia-bosker-renna.ngrok-free.dev"' .demo-state.json)
+            echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
+            echo "Using ngrok URL from state: $NGROK_URL"
+            cat .demo-state.json
+          else
+            echo "⚠ No demo state found - using default URL"
+            echo "ngrok_url=https://asia-bosker-renna.ngrok-free.dev" >> $GITHUB_OUTPUT
+          fi
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -61,8 +74,19 @@ jobs:
       - name: Update OpenAPI Spec with Kong Gateway URL
         if: ${{ !inputs.destroy }}
         run: |
-          # Use the upstream URL from inputs
-          UPSTREAM_URL="${{ inputs.upstream_url || 'https://asia-bosker-renna.ngrok-free.dev' }}"
+          # Use the upstream URL from inputs or demo state
+          UPSTREAM_URL="${{ inputs.upstream_url }}"
+          
+          if [ -z "$UPSTREAM_URL" ] || [ "$UPSTREAM_URL" = "https://asia-bosker-renna.ngrok-free.dev" ]; then
+            if [ -f ".demo-state.json" ]; then
+              STATE_URL=$(jq -r '.ngrok_url // "https://asia-bosker-renna.ngrok-free.dev"' .demo-state.json)
+              UPSTREAM_URL="$STATE_URL"
+              echo "Using upstream URL from demo state: $UPSTREAM_URL"
+            else
+              UPSTREAM_URL="https://asia-bosker-renna.ngrok-free.dev"
+              echo "Using default upstream URL: $UPSTREAM_URL"
+            fi
+          fi
           
           echo "Updating OpenAPI spec server URL to: $UPSTREAM_URL/fhir"
           

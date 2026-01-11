@@ -40,6 +40,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Load demo configuration
+        id: load_config
+        run: |
+          if [ -f ".demo-state.json" ]; then
+            echo "✓ Found demo state configuration"
+            NGROK_URL=$(jq -r '.ngrok_url // "https://asia-bosker-renna.ngrok-free.dev"' .demo-state.json)
+            echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
+            echo "Using ngrok URL from state: $NGROK_URL"
+          else
+            echo "⚠ No demo state found - using default URL"
+            echo "ngrok_url=https://asia-bosker-renna.ngrok-free.dev" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -71,10 +84,22 @@ jobs:
             CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
           fi
           
+          # Use upstream URL from config state if available
+          UPSTREAM_URL="${{ inputs.upstream_url }}"
+          if [ -z "$UPSTREAM_URL" ] || [ "$UPSTREAM_URL" = "https://asia-bosker-renna.ngrok-free.dev/fhir" ]; then
+            if [ -f "../../../.demo-state.json" ]; then
+              STATE_URL=$(jq -r '.fhir_endpoint // empty' ../../../.demo-state.json)
+              if [ ! -z "$STATE_URL" ]; then
+                UPSTREAM_URL="$STATE_URL"
+                echo "Using upstream URL from demo state: $UPSTREAM_URL"
+              fi
+            fi
+          fi
+          
           cat > terraform.tfvars <<EOF
           konnect_token    = "${{ secrets.KONNECT_TOKEN }}"
           control_plane_id = "$CONTROL_PLANE_ID"
-          upstream_url     = "${{ inputs.upstream_url }}"
+          upstream_url     = "$UPSTREAM_URL"
           EOF
           
           terraform init -backend-config=backend-azure.tfbackend
@@ -90,7 +115,12 @@ jobs:
           echo "route_id=$ROUTE_ID" >> $GITHUB_OUTPUT
           echo "api_endpoint=$API_ENDPOINT" >> $GITHUB_OUTPUT
           
+          # Update demo state config
+          cd ../../..\n          if [ -f ".demo-state.json" ]; then
+            jq --arg svc_id "$SERVICE_ID" \\\n               --arg updated \"$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")\" \\\n               '.service_id = $svc_id | .updated_at = $updated' \\\n               .demo-state.json > .demo-state.json.tmp && mv .demo-state.json.tmp .demo-state.json\n            echo \"✓ Updated demo state with service_id\"\n          fi
+          
           # Save outputs for artifact
+          cd terraform/stages/2-integration
           terraform output -json > stage2-outputs.json
       
       - name: Upload outputs

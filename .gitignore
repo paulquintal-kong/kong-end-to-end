@@ -8,6 +8,10 @@
 
 # Demo configuration (contains backend choice)
 .demo-config
+.demo-state.json
+.ngrok-url.txt
+.ngrok.log
+.ngrok.pid
 
 # Kong certificates (contains sensitive cluster certificates)
 .kong/
