@@ -40,20 +40,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Load demo configuration
-        id: load_config
-        run: |
-          echo "Loading configuration from Terraform remote state..."
-          
-          # Default ngrok URL
-          NGROK_URL="${{ inputs.upstream_url }}"
-          if [ -z "$NGROK_URL" ]; then
-            NGROK_URL="https://asia-bosker-renna.ngrok-free.dev"
-          fi
-          
-          echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
-          echo "Using ngrok URL: $NGROK_URL"
-      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -72,10 +58,11 @@ jobs:
           terraform init -backend-config=backend-azure.tfbackend
           CONTROL_PLANE_ID=$(terraform output -raw control_plane_id 2>/dev/null || echo "")
           
-          # Get Service ID from Stage 2 state
+          # Get Service ID and upstream URL from Stage 2 state
           cd ../2-integration
           terraform init -backend-config=backend-azure.tfbackend
           SERVICE_ID=$(terraform output -raw service_id 2>/dev/null || echo "")
+          UPSTREAM_URL=$(terraform output -raw upstream_url 2>/dev/null || echo "")
           
           if [ -z "$CONTROL_PLANE_ID" ] || [ -z "$SERVICE_ID" ]; then
             echo "❌ Failed to get IDs from Terraform state"
@@ -84,12 +71,22 @@ jobs:
             exit 1
           fi
           
+          # Use input if provided, otherwise use value from Terraform state
+          if [ -n "${{ inputs.upstream_url }}" ]; then
+            UPSTREAM_URL="${{ inputs.upstream_url }}"
+          elif [ -z "$UPSTREAM_URL" ]; then
+            # Fallback to hardcoded default if not in state
+            UPSTREAM_URL="https://asia-bosker-renna.ngrok-free.dev"
+          fi
+          
           echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
           echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+          echo "ngrok_url=$UPSTREAM_URL" >> $GITHUB_OUTPUT
           
           echo "✓ Retrieved from Terraform state:"
           echo "  Control Plane ID: $CONTROL_PLANE_ID"
           echo "  Service ID: $SERVICE_ID"
+          echo "  Upstream URL: $UPSTREAM_URL"
       
       - name: Update OpenAPI Spec with Kong Gateway URL
         if: ${{ !inputs.destroy }}

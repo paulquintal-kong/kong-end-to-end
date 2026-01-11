@@ -18,6 +18,11 @@ output "api_endpoint" {
   value       = "https://${var.control_plane_id}.au.cp0.konghq.com/api/patients"
 }
 
+output "upstream_url" {
+  description = "Upstream FHIR server URL (ngrok tunnel)"
+  value       = var.upstream_url
+}
+
 # Output as JSON for easy consumption by next stage
 output "stage2_outputs" {
   description = "All outputs from Stage 2 (for Stage 3 input)"
@@ -26,6 +31,7 @@ output "stage2_outputs" {
     service_name   = konnect_gateway_service.fhir_patient_service.name
     route_id       = konnect_gateway_route.fhir_patient_routes.id
     api_endpoint   = "https://${var.control_plane_id}.au.cp0.konghq.com/api/patients"
+    upstream_url   = var.upstream_url
   }
   sensitive = false
 }
