@@ -3,19 +3,11 @@ name: Stage 4 - API Product
 on:
   workflow_dispatch:
     inputs:
-      control_plane_id:
-        description: 'Control Plane ID from Stage 1'
-        required: true
-        type: string
-      service_id:
-        description: 'Service ID from Stage 2'
-        required: true
-        type: string
       upstream_url:
         description: 'Upstream FHIR server URL (ngrok tunnel)'
         required: false
         type: string
-        default: 'https://asia-bosker-renna.ngrok-free.dev'
+        default: ''
       rate_limit_per_minute:
         description: 'Rate limit (requests per minute)'
         required: false
@@ -54,12 +46,21 @@ jobs:
           if [ -f ".demo-state.json" ]; then
             echo "✓ Found demo state configuration"
             NGROK_URL=$(jq -r '.ngrok_url // "https://asia-bosker-renna.ngrok-free.dev"' .demo-state.json)
+            CONTROL_PLANE_ID=$(jq -r '.control_plane_id // ""' .demo-state.json)
+            SERVICE_ID=$(jq -r '.service_id // ""' .demo-state.json)
+            
             echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
-            echo "Using ngrok URL from state: $NGROK_URL"
+            echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
+            echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+            
+            echo "Using configuration from state:"
+            echo "  Control Plane ID: $CONTROL_PLANE_ID"
+            echo "  Service ID: $SERVICE_ID"
+            echo "  Ngrok URL: $NGROK_URL"
             cat .demo-state.json
           else
-            echo "⚠ No demo state found - using default URL"
-            echo "ngrok_url=https://asia-bosker-renna.ngrok-free.dev" >> $GITHUB_OUTPUT
+            echo "❌ No demo state found - cannot proceed"
+            exit 1
           fi
       
       - name: Setup Terraform
@@ -120,14 +121,18 @@ jobs:
         id: terraform
         working-directory: terraform/stages/4-api-product
         run: |
-          # Get IDs from inputs or artifacts
-          if [ -n "${{ inputs.control_plane_id }}" ]; then
-            CONTROL_PLANE_ID="${{ inputs.control_plane_id }}"
-            SERVICE_ID="${{ inputs.service_id }}"
-          else
-            CONTROL_PLANE_ID=$(jq -r '.control_plane_id.value' ../stage1-outputs.json)
-            SERVICE_ID=$(jq -r '.service_id.value' ../stage2-outputs.json)
+          # Get IDs from demo state
+          CONTROL_PLANE_ID="${{ steps.load_config.outputs.control_plane_id }}"
+          SERVICE_ID="${{ steps.load_config.outputs.service_id }}"
+          
+          if [ -z "$CONTROL_PLANE_ID" ] || [ -z "$SERVICE_ID" ]; then
+            echo "❌ Missing required IDs from demo state"
+            exit 1
           fi
+          
+          echo "Deploying with:"
+          echo "  Control Plane ID: $CONTROL_PLANE_ID"
+          echo "  Service ID: $SERVICE_ID"
           
           cat > terraform.tfvars <<EOF
           konnect_token         = "${{ secrets.KONNECT_TOKEN }}"
