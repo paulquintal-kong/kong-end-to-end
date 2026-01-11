@@ -57,6 +57,3 @@ output "stage5_outputs" {
   }
   sensitive = false
 }
-  }
-  sensitive = false
-}
