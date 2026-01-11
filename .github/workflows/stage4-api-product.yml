@@ -11,6 +11,11 @@ on:
         description: 'Service ID from Stage 2'
         required: true
         type: string
+      upstream_url:
+        description: 'Upstream FHIR server URL (ngrok tunnel)'
+        required: false
+        type: string
+        default: 'https://asia-bosker-renna.ngrok-free.dev'
       rate_limit_per_minute:
         description: 'Rate limit (requests per minute)'
         required: false
@@ -52,6 +57,20 @@ jobs:
       - name: Configure Azure credentials
         run: |
           echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Update OpenAPI Spec with Kong Gateway URL
+        if: ${{ !inputs.destroy }}
+        run: |
+          # Use the upstream URL from inputs
+          UPSTREAM_URL="${{ inputs.upstream_url || 'https://asia-bosker-renna.ngrok-free.dev' }}"
+          
+          echo "Updating OpenAPI spec server URL to: $UPSTREAM_URL/fhir"
+          
+          # Update the server URL in the OpenAPI spec
+          sed -i.bak "s|url: http://localhost:8080/fhir|url: $UPSTREAM_URL/fhir|g" .insomnia/fhir-api-openapi.yaml
+          
+          echo "✓ OpenAPI spec updated with upstream URL"
+          grep -A1 "servers:" .insomnia/fhir-api-openapi.yaml | head -3
       
       - name: Download Stage 1 outputs
         if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
