@@ -157,9 +157,14 @@ jobs:
           terraform plan
           terraform apply -auto-approve
           
-          # Capture outputs
-          PORTAL_ID=$(terraform output -raw portal_id 2>/dev/null || echo "")
-          PORTAL_URL=$(terraform output -raw portal_url 2>/dev/null || echo "")
+          # Get portal URL from Konnect API
+          PORTAL_INFO=$(curl -s "https://au.api.konghq.com/v3/portals/$PORTAL_ID" \
+            -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}")
+          PORTAL_URL=$(echo "$PORTAL_INFO" | jq -r '.default_domain // empty')
+          
+          if [ -n "$PORTAL_URL" ]; then
+            PORTAL_URL="https://$PORTAL_URL"
+          fi
           
           echo "portal_id=$PORTAL_ID" >> $GITHUB_OUTPUT
           echo "portal_url=$PORTAL_URL" >> $GITHUB_OUTPUT

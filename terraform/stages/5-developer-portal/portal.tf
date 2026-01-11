@@ -11,14 +11,9 @@
 # - Application registration
 # ========================================================================
 
-# Fetch existing portal
-data "konnect_portal" "existing_portal" {
-  id = var.portal_id
-}
-
-# Publish API Product to the portal
+# Publish API Product to the existing portal
 resource "konnect_portal_product_version" "fhir_api_publication" {
-  portal_id = data.konnect_portal.existing_portal.id
+  portal_id = var.portal_id
   
   # Link to the API Product from Stage 4
   product_version_id = var.catalog_api_id
