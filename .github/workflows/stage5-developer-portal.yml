@@ -100,14 +100,24 @@ jobs:
             echo "✓ Using provided portal ID: $PORTAL_ID"
             
             # Validate portal exists
-            PORTAL_CHECK=$(curl -s -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
+            PORTAL_CHECK=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
               -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" \
               -H "Content-Type: application/json")
             
-            if echo "$PORTAL_CHECK" | jq -e '.id' > /dev/null 2>&1; then
+            HTTP_CODE=$(echo "$PORTAL_CHECK" | grep "HTTP_CODE:" | cut -d: -f2)
+            RESPONSE_BODY=$(echo "$PORTAL_CHECK" | sed '/HTTP_CODE:/d')
+            
+            echo "Response (HTTP $HTTP_CODE):"
+            echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
+            
+            if [ "$HTTP_CODE" = "200" ] && echo "$RESPONSE_BODY" | jq -e '.id' > /dev/null 2>&1; then
               echo "✓ Portal validated successfully"
             else
-              echo "❌ Portal ID $PORTAL_ID not found"
+              echo "❌ Portal ID $PORTAL_ID not found or inaccessible"
+              echo "HTTP Status: $HTTP_CODE"
+              if echo "$RESPONSE_BODY" | jq -e '.message' > /dev/null 2>&1; then
+                echo "Error: $(echo "$RESPONSE_BODY" | jq -r '.message')"
+              fi
               echo "Please check the Portal ID and try again"
               exit 1
             fi
