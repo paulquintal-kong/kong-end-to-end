@@ -41,7 +41,13 @@ jobs:
           
           if [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
             echo "📄 Linting OpenAPI specification with Insomnia CLI..."
-            inso lint spec .insomnia/fhir-api-openapi.yaml || true
+            if [ -f ".spectral.yaml" ]; then
+              echo "Using custom Spectral ruleset: .spectral.yaml"
+              inso lint spec .insomnia/fhir-api-openapi.yaml --config .spectral.yaml || true
+            else
+              echo "Using default OAS ruleset"
+              inso lint spec .insomnia/fhir-api-openapi.yaml || true
+            fi
           else
             echo "⚠️  OpenAPI spec not found at .insomnia/fhir-api-openapi.yaml"
           fi
