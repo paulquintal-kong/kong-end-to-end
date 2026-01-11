@@ -232,6 +232,36 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
                         
                         # Run terraform destroy
                         echo -e "${CYAN}  - Running terraform destroy...${NC}"
+                        
+                        # Create tfvars file with dummy values for destroy
+                        case $STAGE in
+                            "5-developer-portal")
+                                cat > terraform.tfvars <<EOF
+konnect_token = "$KONNECT_TOKEN"
+catalog_api_id = "dummy"
+EOF
+                                ;;
+                            "4-api-product")
+                                cat > terraform.tfvars <<EOF
+konnect_token = "$KONNECT_TOKEN"
+control_plane_id = "dummy"
+service_id = "dummy"
+EOF
+                                ;;
+                            "2-integration")
+                                cat > terraform.tfvars <<EOF
+konnect_token = "$KONNECT_TOKEN"
+control_plane_id = "dummy"
+upstream_url = "http://dummy"
+EOF
+                                ;;
+                            "1-platform")
+                                cat > terraform.tfvars <<EOF
+konnect_token = "$KONNECT_TOKEN"
+EOF
+                                ;;
+                        esac
+                        
                         DESTROY_OUTPUT=$(terraform destroy -auto-approve 2>&1)
                         
                         # Check if state is locked and try to unlock
