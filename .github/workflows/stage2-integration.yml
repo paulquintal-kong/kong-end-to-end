@@ -116,8 +116,14 @@ jobs:
           echo "api_endpoint=$API_ENDPOINT" >> $GITHUB_OUTPUT
           
           # Update demo state config
-          cd ../../..\n          if [ -f ".demo-state.json" ]; then
-            jq --arg svc_id "$SERVICE_ID" \\\n               --arg updated \"$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")\" \\\n               '.service_id = $svc_id | .updated_at = $updated' \\\n               .demo-state.json > .demo-state.json.tmp && mv .demo-state.json.tmp .demo-state.json\n            echo \"✓ Updated demo state with service_id\"\n          fi
+          cd ../../..
+          if [ -f ".demo-state.json" ]; then
+            jq --arg svc_id "$SERVICE_ID" \
+               --arg updated "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+               '.service_id = $svc_id | .updated_at = $updated' \
+               .demo-state.json > .demo-state.json.tmp && mv .demo-state.json.tmp .demo-state.json
+            echo "✓ Updated demo state with service_id"
+          fi
           
           # Save outputs for artifact
           cd terraform/stages/2-integration
