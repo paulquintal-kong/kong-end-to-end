@@ -147,6 +147,9 @@ jobs:
           CATALOG_API_ID="${{ steps.get_ids.outputs.catalog_api_id }}"
           PORTAL_ID="${{ steps.portal_check.outputs.portal_id }}"
           
+          # Clean any cached Terraform state/config
+          rm -rf .terraform .terraform.lock.hcl
+          
           cat > terraform.tfvars <<EOF
           konnect_token  = "${{ secrets.KONNECT_TOKEN }}"
           catalog_api_id = "$CATALOG_API_ID"
