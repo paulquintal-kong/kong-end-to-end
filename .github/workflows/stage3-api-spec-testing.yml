@@ -29,21 +29,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       
-      - name: Install Insomnia CLI
-        run: npm install -g @insomnia/inso@latest
-      
       - name: Install Spectral CLI
         run: npm install -g @stoplight/spectral-cli
       
-      - name: Validate OpenAPI Spec
+      - name: Validate OpenAPI Spec with Spectral
         run: |
           echo "Stage 3: API Spec Development & Testing"
           echo "========================================"
           echo ""
           
           if [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
-            echo "📄 Validating OpenAPI specification..."
-            inso lint spec .insomnia/fhir-api-openapi.yaml || true
+            echo "📄 Validating OpenAPI specification with Spectral..."
+            spectral lint .insomnia/fhir-api-openapi.yaml --ruleset spectral:oas || true
           else
             echo "⚠️  OpenAPI spec not found at .insomnia/fhir-api-openapi.yaml"
           fi
@@ -53,12 +50,12 @@ jobs:
           if [ -f ".spectral.yaml" ]; then
             echo ""
             echo "📋 Validating against custom Spectral rules..."
-            spectral lint .insomnia/fhir-api-openapi.yaml || true
+          echo ""
+          if [ -f ".spectral.yaml" ] && [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
+            echo "📋 Validating against custom Spectral rules..."
+            spectral lint .insomnia/fhir-api-openapi.yaml --ruleset .spectral.yaml || true
           else
-            echo "⚠️  No custom Spectral rules found (.spectral.yaml)"
-          fi
-      
-      - name: Summary
+            echo "ℹ️  No custom Spectral rules found (.spectral.yaml) - skipping custom validation
         run: |
           echo ""
           echo "✅ API Specification validation complete"

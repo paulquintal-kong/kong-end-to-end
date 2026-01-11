@@ -24,14 +24,14 @@ echo -e "${BLUE}   Persona: API Developer / Quality Engineer${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Check for Inso CLI
-if ! command -v inso &> /dev/null; then
-    echo -e "${YELLOW}⚠️  Insomnia CLI (inso) not found.${NC}"
+# Check for Spectral CLI
+if ! command -v spectral &> /dev/null; then
+    echo -e "${YELLOW}⚠️  Spectral CLI not found.${NC}"
     echo ""
-    echo "Installing inso CLI..."
-    npm install -g @insomnia/inso@latest || {
-        echo -e "${RED}❌ Failed to install inso CLI${NC}"
-        echo "Please install manually: npm install -g @insomnia/inso"
+    echo "Installing Spectral CLI..."
+    npm install -g @stoplight/spectral-cli || {
+        echo -e "${RED}❌ Failed to install Spectral CLI${NC}"
+        echo "Please install manually: npm install -g @stoplight/spectral-cli"
         exit 1
     }
 fi
@@ -56,16 +56,16 @@ fi
 
 echo "📄 OpenAPI Spec: .insomnia/fhir-api-openapi.yaml"
 echo ""
-echo "Running specification validation..."
+echo "Running specification validation with Spectral..."
 echo ""
 
-# Lint the OpenAPI spec
-if inso lint spec .insomnia/fhir-api-openapi.yaml; then
+# Lint the OpenAPI spec with Spectral using the built-in OAS ruleset
+if spectral lint .insomnia/fhir-api-openapi.yaml --ruleset spectral:oas; then
     echo ""
-    echo -e "${GREEN}✓ OpenAPI specification passed all linting rules${NC}"
+    echo -e "${GREEN}✓ OpenAPI specification passed all validation rules${NC}"
 else
     echo ""
-    echo -e "${YELLOW}⚠️  OpenAPI specification has linting warnings/errors${NC}"
+    echo -e "${YELLOW}⚠️  OpenAPI specification has validation warnings/errors${NC}"
     echo "Review the output above and fix issues in the spec file."
 fi
 
@@ -90,20 +90,10 @@ else
     echo "  • API documentation standards"
     echo ""
     
-    # Check if spectral is installed
-    if ! command -v spectral &> /dev/null; then
-        echo -e "${YELLOW}Installing Spectral CLI...${NC}"
-        npm install -g @stoplight/spectral-cli || {
-            echo -e "${YELLOW}⚠️  Could not install Spectral. Skipping custom validation.${NC}"
-        }
-    fi
-    
-    if command -v spectral &> /dev/null; then
-        echo "Running custom Spectral validation..."
-        spectral lint .insomnia/fhir-api-openapi.yaml || {
-            echo -e "${YELLOW}⚠️  Spectral validation found issues${NC}"
-        }
-    fi
+    echo "Running custom Spectral validation..."
+    spectral lint .insomnia/fhir-api-openapi.yaml --ruleset .spectral.yaml || {
+        echo -e "${YELLOW}⚠️  Spectral validation found issues${NC}"
+    }
 fi
 
 echo ""
