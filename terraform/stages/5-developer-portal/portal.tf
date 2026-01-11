@@ -3,31 +3,63 @@
 # ========================================================================
 # Use existing Developer Portal and publish API Product to it
 # 
-# Key Features:
-# - API catalog browsing
-# - Interactive API documentation
-# - Developer registration and onboarding
-# - API key/credential management
-# - Application registration
+# Note: Using null_resource with API calls because the Terraform provider's
+# konnect_portal_product_version resource only supports v2 portals.
+# This portal is v3, so we use the v3 API directly.
 # ========================================================================
 
-# Publish API Product to the existing portal
-resource "konnect_portal_product_version" "fhir_api_publication" {
-  portal_id = var.portal_id
+# Publish API Product to the existing portal using Konnect API
+resource "null_resource" "publish_to_portal" {
+  triggers = {
+    portal_id          = var.portal_id
+    catalog_api_id     = var.catalog_api_id
+    publish_status     = "published"
+  }
   
-  # Link to the API Product from Stage 4
-  product_version_id = var.catalog_api_id
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Publish the API product version to the portal
+      RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
+        "https://au.api.konghq.com/v3/portals/${var.portal_id}/product-versions" \
+        -H "Authorization: Bearer ${var.konnect_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "product_version_id": "${var.catalog_api_id}",
+          "publish_status": "published",
+          "deprecated": false,
+          "application_registration_enabled": true,
+          "auto_approve_registration": false,
+          "auth_strategy_ids": []
+        }')
+      
+      HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+      BODY=$(echo "$RESPONSE" | sed '/HTTP_CODE:/d')
+      
+      echo "Response (HTTP $HTTP_CODE):"
+      echo "$BODY" | jq '.' || echo "$BODY"
+      
+      if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "200" ]; then
+        echo "Failed to publish API to portal"
+        exit 1
+      fi
+      
+      # Save publication ID for outputs
+      echo "$BODY" | jq -r '.id' > ${path.module}/.publication_id
+    EOT
+  }
   
-  # Publication settings
-  publish_status = "published"
-  deprecated     = false
-  
-  # Authentication strategies (empty array means use portal default)
-  auth_strategy_ids = []
-  
-  # Make it discoverable in the portal
-  application_registration_enabled = true
-  auto_approve_registration       = false  # Require approval for app registration
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Note: Manual cleanup may be required in the portal UI"
+    EOT
+  }
+}
+
+# Read publication ID from file
+data "local_file" "publication_id" {
+  depends_on = [null_resource.publish_to_portal]
+  filename   = "${path.module}/.publication_id"
 }
 
 # ========================================================================

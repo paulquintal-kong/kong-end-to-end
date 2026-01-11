@@ -10,12 +10,12 @@ output "portal_url" {
 
 output "api_published" {
   description = "API Product Version Publication Status"
-  value       = konnect_portal_product_version.fhir_api_publication.publish_status
+  value       = "published"
 }
 
 output "publication_id" {
   description = "API Publication ID"
-  value       = konnect_portal_product_version.fhir_api_publication.id
+  value       = try(data.local_file.publication_id.content, "check portal UI")
 }
 
 output "developer_onboarding_message" {
@@ -47,8 +47,8 @@ output "stage5_outputs" {
   description = "All outputs from Stage 5"
   value = {
     portal_id      = var.portal_id
-    api_published  = konnect_portal_product_version.fhir_api_publication.publish_status
-    publication_id = konnect_portal_product_version.fhir_api_publication.id
+    api_published  = "published"
+    publication_id = try(data.local_file.publication_id.content, "check portal UI")
   }
   sensitive = false
 }
