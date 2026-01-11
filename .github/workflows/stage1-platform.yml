@@ -18,6 +18,20 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+        default: 'production'
+      project_name:
+        required: false
+        type: string
+        default: 'fhir-patient-records'
+      destroy:
+        required: false
+        type: boolean
+        default: false
 
 env:
   TF_VERSION: '1.14.3'

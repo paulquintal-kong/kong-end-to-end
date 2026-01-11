@@ -18,6 +18,26 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      control_plane_id:
+        required: false
+        type: string
+      service_id:
+        required: false
+        type: string
+      upstream_url:
+        required: false
+        type: string
+        default: ''
+      rate_limit_per_minute:
+        required: false
+        type: number
+        default: 5
+      destroy:
+        required: false
+        type: boolean
+        default: false
   # workflow_run:
   #   workflows: ["Stage 3 - API Spec Testing"]
   #   types:

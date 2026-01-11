@@ -17,6 +17,19 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      control_plane_id:
+        required: true
+        type: string
+      upstream_url:
+        required: false
+        type: string
+        default: 'https://asia-bosker-renna.ngrok-free.dev/fhir'
+      destroy:
+        required: false
+        type: boolean
+        default: false
   # workflow_run:
   #   workflows: ["Stage 1 - Platform"]
   #   types:
