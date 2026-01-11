@@ -15,7 +15,7 @@ output "api_published" {
 
 output "publication_id" {
   description = "API Publication ID"
-  value       = konnect_api_publication.fhir_api_publication.id
+  value       = "${var.catalog_api_id}:${var.portal_id}"
 }
 
 output "developer_onboarding_message" {
@@ -25,7 +25,7 @@ output "developer_onboarding_message" {
     🎉 API Published to Developer Portal!
     
     Portal ID: ${var.portal_id}
-    API Publication ID: ${konnect_api_publication.fhir_api_publication.id}
+    API ID: ${var.catalog_api_id}
     Visibility: ${konnect_api_publication.fhir_api_publication.visibility}
     
     Next Steps:
@@ -45,7 +45,7 @@ output "stage5_outputs" {
   value = {
     portal_id      = var.portal_id
     api_published  = konnect_api_publication.fhir_api_publication.visibility
-    publication_id = konnect_api_publication.fhir_api_publication.id
+    api_id         = var.catalog_api_id
   }
   sensitive = false
 }
