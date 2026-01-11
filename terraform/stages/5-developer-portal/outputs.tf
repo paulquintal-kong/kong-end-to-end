@@ -10,34 +10,31 @@ output "portal_url" {
 
 output "api_published" {
   description = "API Product Version Publication Status"
-  value       = "manual_step_required"
+  value       = konnect_api_publication.fhir_api_publication.visibility
 }
 
 output "publication_id" {
   description = "API Publication ID"
-  value       = "Publish manually via UI"
+  value       = konnect_api_publication.fhir_api_publication.id
 }
 
 output "developer_onboarding_message" {
   description = "Instructions for 3rd party developers"
   value = <<-EOT
     
-    📋 Manual Step Required - Portal v3 Limitation
+    🎉 API Published to Developer Portal!
     
     Portal ID: ${var.portal_id}
-    API Product ID: ${var.catalog_api_id}
+    API Publication ID: ${konnect_api_publication.fhir_api_publication.id}
+    Visibility: ${konnect_api_publication.fhir_api_publication.visibility}
     
-    To publish the API to your developer portal:
-    1. Visit https://au.cloud.konghq.com/portals
-    2. Select your portal
-    3. Go to API Products → Publish API Product
-    4. Select the FHIR Patient API
-    5. Configure and publish
+    Next Steps:
+    1. Share the portal URL with developers
+    2. Developers can register and create applications
+    3. Review and approve application registrations
+    4. Monitor API usage and analytics
     
-    After publishing:
-    - Share the portal URL with developers
-    - Manage applications and credentials
-    - Monitor API usage and analytics
+    Portal Management: https://au.cloud.konghq.com/portals
     
   EOT
 }
@@ -47,8 +44,8 @@ output "stage5_outputs" {
   description = "All outputs from Stage 5"
   value = {
     portal_id      = var.portal_id
-    api_published  = "manual_step_required"
-    publication_id = "Publish via UI: https://au.cloud.konghq.com/portals"
+    api_published  = konnect_api_publication.fhir_api_publication.visibility
+    publication_id = konnect_api_publication.fhir_api_publication.id
   }
   sensitive = false
 }
