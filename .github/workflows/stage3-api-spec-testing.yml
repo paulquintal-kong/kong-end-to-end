@@ -41,7 +41,7 @@ jobs:
           
           if [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
             echo "📄 Validating OpenAPI specification with Spectral..."
-            spectral lint .insomnia/fhir-api-openapi.yaml --ruleset spectral:oas || true
+            spectral lint .insomnia/fhir-api-openapi.yaml || true
           else
             echo "⚠️  OpenAPI spec not found at .insomnia/fhir-api-openapi.yaml"
           fi
