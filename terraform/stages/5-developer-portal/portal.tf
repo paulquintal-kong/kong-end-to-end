@@ -16,8 +16,7 @@ resource "konnect_api_publication" "fhir_api_publication" {
   visibility                 = "public"
   auto_approve_registrations = false
   
-  # Authentication strategies (empty list uses portal default)
-  auth_strategy_ids = []
+  # Omit auth_strategy_ids to use portal's default authentication strategy
 }
 
 # ========================================================================
