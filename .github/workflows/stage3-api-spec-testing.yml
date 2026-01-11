@@ -25,13 +25,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      
       - name: Install Insomnia CLI
-        run: npm install -g @kong/inso@latest
+        run: |
+          INSO_VERSION="12.2.0"
+          curl -L "https://github.com/Kong/insomnia/releases/download/core%40${INSO_VERSION}/inso-linux-x64-${INSO_VERSION}.tar.xz" -o inso.tar.xz
+          tar -xf inso.tar.xz
+          sudo mv inso /usr/local/bin/
+          inso --version
       
       - name: Lint OpenAPI Spec with Inso
         run: |
