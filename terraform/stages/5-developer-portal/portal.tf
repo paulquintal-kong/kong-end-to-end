@@ -19,7 +19,7 @@ resource "null_resource" "publish_to_portal" {
   provisioner "local-exec" {
     command = <<-EOT
       # Publish the API product version to the portal
-      RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
+      RESPONSE=$(curl -s -w "\nHTTP_CODE:%%{http_code}" -X POST \
         "https://au.api.konghq.com/v3/portals/${var.portal_id}/product-versions" \
         -H "Authorization: Bearer ${var.konnect_token}" \
         -H "Content-Type: application/json" \
