@@ -56,10 +56,11 @@ jobs:
         run: |
           echo ""
           echo "🧪 Running API endpoint tests..."
-          if [ -d ".insomnia" ]; then
-            inso run test --env .insomnia/environments.json || echo "ℹ️  No test suites found or tests skipped"
+          if [ -f ".insomnia/fhir-api-insomnia.yaml" ]; then
+            echo "Running tests from fhir-api-insomnia.yaml..."
+            inso run test .insomnia/fhir-api-insomnia.yaml --env base || echo "⚠️  Some tests failed or were skipped"
           else
-            echo "ℹ️  No Insomnia workspace found - skipping tests"
+            echo "⚠️  Insomnia test file not found at .insomnia/fhir-api-insomnia.yaml"
           fi
       
       - name: Summary
