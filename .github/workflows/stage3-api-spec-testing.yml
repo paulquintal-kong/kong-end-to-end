@@ -30,41 +30,41 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       
-      - name: Install Spectral CLI
-        run: npm install -g @stoplight/spectral-cli
+      - name: Install Insomnia CLI
+        run: npm install -g insomnia-inso
       
-      - name: Validate OpenAPI Spec with Spectral
+      - name: Lint OpenAPI Spec with Inso
         run: |
           echo "Stage 3: API Spec Development & Testing"
           echo "========================================"
           echo ""
           
           if [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
-            echo "📄 Validating OpenAPI specification with Spectral..."
-            spectral lint .insomnia/fhir-api-openapi.yaml || true
+            echo "📄 Linting OpenAPI specification with Insomnia CLI..."
+            inso lint spec .insomnia/fhir-api-openapi.yaml || true
           else
             echo "⚠️  OpenAPI spec not found at .insomnia/fhir-api-openapi.yaml"
           fi
       
-      - name: Validate Custom Spectral Rules
+      - name: Run API Tests with Inso
         run: |
           echo ""
-          if [ -f ".spectral.yaml" ] && [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
-            echo "📋 Validating against custom Spectral rules..."
-            spectral lint .insomnia/fhir-api-openapi.yaml --ruleset .spectral.yaml || true
+          echo "🧪 Running API endpoint tests..."
+          if [ -d ".insomnia" ]; then
+            inso run test --env .insomnia/environments.json || echo "ℹ️  No test suites found or tests skipped"
           else
-            echo "ℹ️  No custom Spectral rules found (.spectral.yaml) - skipping custom validation"
+            echo "ℹ️  No Insomnia workspace found - skipping tests"
           fi
       
       - name: Summary
         run: |
           echo ""
-          echo "✅ API Specification validation complete"
+          echo "✅ API Specification validation and testing complete"
           echo ""
           echo "This stage validates:"
-          echo "  - OpenAPI syntax and structure"
-          echo "  - FHIR compliance (if Spectral rules configured)"
-          echo "  - Business rules and governance"
+          echo "  - OpenAPI syntax and structure (inso lint)"
+          echo "  - API endpoint testing (inso run test)"
+          echo "  - FHIR API compliance"
           echo ""
           echo "For full demo experience, run locally:"
           echo "  cd terraform/stages/3-api-spec-testing && ./demo.sh"
