@@ -22,6 +22,9 @@ resource "konnect_portal_product_version" "fhir_api_publication" {
   publish_status = "published"
   deprecated     = false
   
+  # Authentication strategies (empty array means use portal default)
+  auth_strategy_ids = []
+  
   # Make it discoverable in the portal
   application_registration_enabled = true
   auto_approve_registration       = false  # Require approval for app registration
