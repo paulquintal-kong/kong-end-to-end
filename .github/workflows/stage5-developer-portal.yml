@@ -73,8 +73,8 @@ jobs:
           if [ -z "$PORTAL_ID" ]; then
             echo "🔍 No portal ID provided, attempting to discover existing portal..."
             
-            # Try to list portals using Konnect API
-            PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v2/portals" \
+            # Try to list portals using Konnect API (v3)
+            PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v3/portals" \
               -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" \
               -H "Content-Type: application/json")
             
@@ -99,8 +99,8 @@ jobs:
           else
             echo "✓ Using provided portal ID: $PORTAL_ID"
             
-            # Validate portal exists
-            PORTAL_CHECK=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
+            # Validate portal exists using v3 API
+            PORTAL_CHECK=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://au.api.konghq.com/v3/portals/$PORTAL_ID" \
               -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" \
               -H "Content-Type: application/json")
             
@@ -126,7 +126,7 @@ jobs:
           echo "portal_id=$PORTAL_ID" >> $GITHUB_OUTPUT
           echo ""
           echo "📋 Portal Details:"
-          curl -s -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
+          curl -s -X GET "https://au.api.konghq.com/v3/portals/$PORTAL_ID" \
             -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" | jq '{id, name, default_domain}'
       
       - name: Download Stage 4 outputs

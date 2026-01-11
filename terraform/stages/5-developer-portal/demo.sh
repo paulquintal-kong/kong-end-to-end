@@ -32,7 +32,7 @@ echo ""
 
 # Check for existing portal
 echo "🔍 Checking for existing Developer Portal..."
-PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v2/portals" \
+PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v3/portals" \
   -H "Authorization: Bearer $KONNECT_TOKEN" \
   -H "Content-Type: application/json")
 
