@@ -96,23 +96,23 @@ echo ""
 # ========================================================================
 # 3. Clean up Terraform lock files (optional)
 # ========================================================================
-echo -e "${BLUE}3. Cleaning up temporary files...${NC}"
-
-# Remove Terraform lock files if user wants
-read -p "Remove Terraform lock files? (y/n): " cleanup_tf
-if [[ "$cleanup_tf" =~ ^[Yy]$ ]]; then
-    find terraform/stages -name ".terraform.lock.hcl" -delete 2>/dev/null && \
-        echo -e "${GREEN}✓${NC} Removed Terraform lock files" || \
-        echo -e "${CYAN}ℹ${NC} No Terraform lock files found"
-fi
-
-# Remove tfvars files
-read -p "Remove terraform.tfvars files? (y/n): " cleanup_tfvars
-if [[ "$cleanup_tfvars" =~ ^[Yy]$ ]]; then
-    find terraform/stages -name "terraform.tfvars" -delete 2>/dev/null && \
-        echo -e "${GREEN}✓${NC} Removed terraform.tfvars files" || \
-        echo -e "${CYAN}ℹ${NC} No tfvars files found"
-fi
+# echo -e "${BLUE}3. Cleaning up temporary files...${NC}"
+# 
+# # Remove Terraform lock files if user wants
+# read -p "Remove Terraform lock files? (y/n): " cleanup_tf
+# if [[ "$cleanup_tf" =~ ^[Yy]$ ]]; then
+#     find terraform/stages -name ".terraform.lock.hcl" -delete 2>/dev/null && \
+#         echo -e "${GREEN}✓${NC} Removed Terraform lock files" || \
+#         echo -e "${CYAN}ℹ${NC} No Terraform lock files found"
+# fi
+# 
+# # Remove tfvars files
+# read -p "Remove terraform.tfvars files? (y/n): " cleanup_tfvars
+# if [[ "$cleanup_tfvars" =~ ^[Yy]$ ]]; then
+#     find terraform/stages -name "terraform.tfvars" -delete 2>/dev/null && \
+#         echo -e "${GREEN}✓${NC} Removed terraform.tfvars files" || \
+#         echo -e "${CYAN}ℹ${NC} No tfvars files found"
+# fi
 
 echo ""
 
