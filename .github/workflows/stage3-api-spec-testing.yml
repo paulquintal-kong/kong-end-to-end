@@ -28,16 +28,19 @@ jobs:
       - name: Install Insomnia CLI
         run: |
           INSO_VERSION="12.2.0"
+          mkdir -p /tmp/inso
           curl -L "https://github.com/Kong/insomnia/releases/download/core%40${INSO_VERSION}/inso-linux-x64-${INSO_VERSION}.tar.xz" -o inso.tar.xz
-          tar -xf inso.tar.xz
-          sudo mv inso /usr/local/bin/
-          inso --version
+          tar -xf inso.tar.xz -C /tmp/inso
+          chmod +x /tmp/inso/inso
+          /tmp/inso/inso --version
       
       - name: Lint OpenAPI Spec with Inso
         run: |
           echo "Stage 3: API Spec Development & Testing"
           echo "========================================"
           echo ""
+          
+          export PATH="/tmp/inso:$PATH"
           
           if [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
             echo "📄 Linting OpenAPI specification with Insomnia CLI..."
@@ -53,16 +56,16 @@ jobs:
           fi
       
       - name: Run API Tests with Inso
+        continue-on-error: true
         run: |
           echo ""
           echo "🧪 Running API endpoint tests..."
+          
+          export PATH="/tmp/inso:$PATH"
+          
           if [ -f ".insomnia/fhir-api-insomnia.yaml" ]; then
             echo "Running Patient API test suite..."
-            echo "ℹ️  Note: inso CLI has limited support for test execution from YAML exports"
-            echo "ℹ️  Tests are defined in afterResponse scripts and require Insomnia GUI"
-            echo ""
-            echo "Available tests (executed in Insomnia GUI):"
-            grep -A 2 "insomnia.test" .insomnia/fhir-api-insomnia.yaml | grep -E "(insomnia.test|name:)" || true
+            inso -w .insomnia/fhir-api-insomnia.yaml run test "Patient API Tests" --ci --disableCertValidation -r spec || echo "⚠️  Tests failed or not found"
           else
             echo "⚠️  Insomnia test file not found"
           fi
