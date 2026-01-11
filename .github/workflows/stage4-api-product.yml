@@ -43,25 +43,16 @@ jobs:
       - name: Load demo configuration
         id: load_config
         run: |
-          if [ -f ".demo-state.json" ]; then
-            echo "✓ Found demo state configuration"
-            NGROK_URL=$(jq -r '.ngrok_url // "https://asia-bosker-renna.ngrok-free.dev"' .demo-state.json)
-            CONTROL_PLANE_ID=$(jq -r '.control_plane_id // ""' .demo-state.json)
-            SERVICE_ID=$(jq -r '.service_id // ""' .demo-state.json)
-            
-            echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
-            echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
-            echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
-            
-            echo "Using configuration from state:"
-            echo "  Control Plane ID: $CONTROL_PLANE_ID"
-            echo "  Service ID: $SERVICE_ID"
-            echo "  Ngrok URL: $NGROK_URL"
-            cat .demo-state.json
-          else
-            echo "❌ No demo state found - cannot proceed"
-            exit 1
+          echo "Loading configuration from Terraform remote state..."
+          
+          # Default ngrok URL
+          NGROK_URL="${{ inputs.upstream_url }}"
+          if [ -z "$NGROK_URL" ]; then
+            NGROK_URL="https://asia-bosker-renna.ngrok-free.dev"
           fi
+          
+          echo "ngrok_url=$NGROK_URL" >> $GITHUB_OUTPUT
+          echo "Using ngrok URL: $NGROK_URL"
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -72,6 +63,33 @@ jobs:
       - name: Configure Azure credentials
         run: |
           echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
+      
+      - name: Get IDs from Terraform State
+        id: get_ids
+        run: |
+          # Get Control Plane ID from Stage 1 state
+          cd terraform/stages/1-platform
+          terraform init -backend-config=backend-azure.tfbackend
+          CONTROL_PLANE_ID=$(terraform output -raw control_plane_id 2>/dev/null || echo "")
+          
+          # Get Service ID from Stage 2 state
+          cd ../2-integration
+          terraform init -backend-config=backend-azure.tfbackend
+          SERVICE_ID=$(terraform output -raw service_id 2>/dev/null || echo "")
+          
+          if [ -z "$CONTROL_PLANE_ID" ] || [ -z "$SERVICE_ID" ]; then
+            echo "❌ Failed to get IDs from Terraform state"
+            echo "Control Plane ID: ${CONTROL_PLANE_ID:-not found}"
+            echo "Service ID: ${SERVICE_ID:-not found}"
+            exit 1
+          fi
+          
+          echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
+          echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+          
+          echo "✓ Retrieved from Terraform state:"
+          echo "  Control Plane ID: $CONTROL_PLANE_ID"
+          echo "  Service ID: $SERVICE_ID"
       
       - name: Update OpenAPI Spec with Kong Gateway URL
         if: ${{ !inputs.destroy }}
@@ -121,14 +139,9 @@ jobs:
         id: terraform
         working-directory: terraform/stages/4-api-product
         run: |
-          # Get IDs from demo state
-          CONTROL_PLANE_ID="${{ steps.load_config.outputs.control_plane_id }}"
-          SERVICE_ID="${{ steps.load_config.outputs.service_id }}"
-          
-          if [ -z "$CONTROL_PLANE_ID" ] || [ -z "$SERVICE_ID" ]; then
-            echo "❌ Missing required IDs from demo state"
-            exit 1
-          fi
+          # Get IDs from previous step
+          CONTROL_PLANE_ID="${{ steps.get_ids.outputs.control_plane_id }}"
+          SERVICE_ID="${{ steps.get_ids.outputs.service_id }}"
           
           echo "Deploying with:"
           echo "  Control Plane ID: $CONTROL_PLANE_ID"
