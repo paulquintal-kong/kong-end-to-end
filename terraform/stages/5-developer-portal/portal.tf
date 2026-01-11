@@ -1,8 +1,7 @@
 # ========================================================================
 # Developer Portal Configuration
 # ========================================================================
-# The Developer Portal is where external developers discover and
-# consume your APIs
+# Use existing Developer Portal and publish API Product to it
 # 
 # Key Features:
 # - API catalog browsing
@@ -12,33 +11,25 @@
 # - Application registration
 # ========================================================================
 
-resource "konnect_portal" "developer_portal" {
-  name         = var.portal_name
-  display_name = var.portal_display_name
+# Fetch existing portal
+data "konnect_portal" "existing_portal" {
+  id = var.portal_id
+}
+
+# Publish API Product to the portal
+resource "konnect_portal_product_version" "fhir_api_publication" {
+  portal_id = data.konnect_portal.existing_portal.id
   
-  # Authentication and Access Control
-  # Demo Modes:
-  # - Public Portal (authentication_enabled = false): Let anyone browse APIs
-  # - Private Portal (authentication_enabled = true): Require login to view
-  authentication_enabled    = var.enable_auth
-  rbac_enabled             = false
+  # Link to the API Product from Stage 4
+  product_version_id = var.catalog_api_id
   
-  # Developer Onboarding Workflow
-  # Demo Modes:
-  # - Self-service (auto_approve = true): Developers get instant access
-  # - Controlled (auto_approve = false): API owner approves each developer
-  auto_approve_developers   = var.auto_approve_developers
-  auto_approve_applications = false  # Always require approval for app credentials
+  # Publication settings
+  publish_status = "published"
+  deprecated     = false
   
-  # Default Visibility Settings
-  default_api_visibility  = "public"  # New APIs are publicly visible by default
-  default_page_visibility = "public"  # Portal pages are public
-  
-  labels = {
-    environment = "production"
-    team        = "api-product"
-    purpose     = "external-developers"
-  }
+  # Make it discoverable in the portal
+  application_registration_enabled = true
+  auto_approve_registration       = false  # Require approval for app registration
 }
 
 # ========================================================================
@@ -47,7 +38,7 @@ resource "konnect_portal" "developer_portal" {
 # After running this stage, demonstrate the 3rd party developer experience:
 #
 # 1. Visit the portal URL (output above)
-# 2. Browse available APIs
+# 2. Browse available APIs - you should see the FHIR Patient API
 # 3. Register as a developer (if auth enabled)
 # 4. Create an application
 # 5. Request API credentials

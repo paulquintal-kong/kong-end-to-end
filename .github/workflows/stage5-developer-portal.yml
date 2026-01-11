@@ -3,21 +3,11 @@ name: Stage 5 - Developer Portal
 on:
   workflow_dispatch:
     inputs:
-      portal_name:
-        description: 'Portal name (lowercase, dashes only)'
+      portal_id:
+        description: 'Developer Portal ID (leave empty to auto-discover)'
         required: false
         type: string
-        default: 'patient-records-portal-v2'
-      portal_display_name:
-        description: 'Portal display name'
-        required: false
-        type: string
-        default: 'Patient Records Developer Portal'
-      enable_auth:
-        description: 'Require authentication'
-        required: false
-        type: boolean
-        default: false
+        default: ''
       destroy:
         description: 'Destroy infrastructure'
         required: false
@@ -74,6 +64,61 @@ jobs:
           echo "✓ Retrieved from Terraform state:"
           echo "  Catalog API ID: $CATALOG_API_ID"
       
+      - name: Discover or Validate Portal
+        id: portal_check
+        run: |
+          # Use input portal ID if provided, otherwise try to discover
+          PORTAL_ID="${{ inputs.portal_id }}"
+          
+          if [ -z "$PORTAL_ID" ]; then
+            echo "🔍 No portal ID provided, attempting to discover existing portal..."
+            
+            # Try to list portals using Konnect API
+            PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v2/portals" \
+              -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" \
+              -H "Content-Type: application/json")
+            
+            # Get first portal ID if available
+            PORTAL_ID=$(echo "$PORTALS" | jq -r '.data[0].id // empty')
+            
+            if [ -z "$PORTAL_ID" ]; then
+              echo ""
+              echo "❌ No portal found in your Konnect organization"
+              echo ""
+              echo "Please create a Developer Portal first:"
+              echo "  1. Go to https://au.cloud.konghq.com/portals"
+              echo "  2. Click 'New Portal'"
+              echo "  3. Configure your portal settings"
+              echo "  4. Re-run this workflow with the Portal ID"
+              echo ""
+              echo "Or provide a Portal ID as input when running this workflow"
+              exit 1
+            fi
+            
+            echo "✓ Discovered portal: $PORTAL_ID"
+          else
+            echo "✓ Using provided portal ID: $PORTAL_ID"
+            
+            # Validate portal exists
+            PORTAL_CHECK=$(curl -s -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
+              -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" \
+              -H "Content-Type: application/json")
+            
+            if echo "$PORTAL_CHECK" | jq -e '.id' > /dev/null 2>&1; then
+              echo "✓ Portal validated successfully"
+            else
+              echo "❌ Portal ID $PORTAL_ID not found"
+              echo "Please check the Portal ID and try again"
+              exit 1
+            fi
+          fi
+          
+          echo "portal_id=$PORTAL_ID" >> $GITHUB_OUTPUT
+          echo ""
+          echo "📋 Portal Details:"
+          curl -s -X GET "https://au.api.konghq.com/v2/portals/$PORTAL_ID" \
+            -H "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}" | jq '{id, name, default_domain}'
+      
       - name: Download Stage 4 outputs
         if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
         uses: actions/download-artifact@v4
@@ -83,21 +128,19 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Deploy Developer Portal
+      - name: Publish API to Developer Portal
         if: ${{ !inputs.destroy }}
         id: terraform
         working-directory: terraform/stages/5-developer-portal
         run: |
-          # Get catalog API ID from Terraform state
+          # Get catalog API ID and portal ID from previous steps
           CATALOG_API_ID="${{ steps.get_ids.outputs.catalog_api_id }}"
+          PORTAL_ID="${{ steps.portal_check.outputs.portal_id }}"
           
           cat > terraform.tfvars <<EOF
-          konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
-          catalog_api_id          = "$CATALOG_API_ID"
-          portal_name             = "${{ inputs.portal_name }}"
-          portal_display_name     = "${{ inputs.portal_display_name }}"
-          enable_auth             = ${{ inputs.enable_auth }}
-          auto_approve_developers = false
+          konnect_token  = "${{ secrets.KONNECT_TOKEN }}"
+          catalog_api_id = "$CATALOG_API_ID"
+          portal_id      = "$PORTAL_ID"
           EOF
           
           terraform init -backend-config=backend-azure.tfbackend
@@ -105,24 +148,26 @@ jobs:
           terraform apply -auto-approve
           
           # Capture outputs
-          PORTAL_ID=$(terraform output -json | jq -r '.portal_id.value')
-          PORTAL_URL=$(terraform output -json | jq -r '.portal_url.value')
+          PORTAL_ID=$(terraform output -raw portal_id 2>/dev/null || echo "")
+          PORTAL_URL=$(terraform output -raw portal_url 2>/dev/null || echo "")
           
           echo "portal_id=$PORTAL_ID" >> $GITHUB_OUTPUT
           echo "portal_url=$PORTAL_URL" >> $GITHUB_OUTPUT
           
           echo ""
-          echo "🎉 Developer Portal deployed!"
+          echo "🎉 API published to Developer Portal!"
           echo "Portal URL: $PORTAL_URL"
       
-      - name: Destroy Developer Portal
+      - name: Unpublish API from Portal
         if: ${{ inputs.destroy }}
         working-directory: terraform/stages/5-developer-portal
         run: |
-          # Get catalog API ID from Terraform state for destroy
+          # Get portal ID and catalog API ID for destroy
+          PORTAL_ID="${{ steps.portal_check.outputs.portal_id }}"
           CATALOG_API_ID="${{ steps.get_ids.outputs.catalog_api_id }}"
           
           terraform init -backend-config=backend-azure.tfbackend
           terraform destroy -auto-approve \
             -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
-            -var="catalog_api_id=$CATALOG_API_ID"
+            -var="catalog_api_id=$CATALOG_API_ID" \
+            -var="portal_id=$PORTAL_ID"
