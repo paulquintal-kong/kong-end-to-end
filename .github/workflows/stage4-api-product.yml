@@ -21,10 +21,10 @@ on:
         required: false
         type: boolean
         default: false
-  workflow_run:
-    workflows: ["Stage 3 - API Spec Testing"]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: ["Stage 3 - API Spec Testing"]
+  #   types:
+  #     - completed
 
 env:
   TF_VERSION: '1.14.3'

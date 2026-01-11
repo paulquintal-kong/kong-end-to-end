@@ -2,10 +2,10 @@ name: Stage 3 - API Spec Testing
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Stage 2 - Integration"]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: ["Stage 2 - Integration"]
+  #   types:
+  #     - completed
   pull_request:
     paths:
       - '.insomnia/**'
