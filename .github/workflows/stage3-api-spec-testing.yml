@@ -59,21 +59,16 @@ jobs:
         continue-on-error: true
         run: |
           echo ""
-          echo "🧪 API Testing Status"
-          echo "====================="
-          echo ""
-          echo "✓ OpenAPI specification linted successfully"
-          echo ""
-          echo "ℹ️  Patient endpoint tests exist in .insomnia/fhir-api-insomnia.yaml"
-          echo "    These tests are defined as afterResponse scripts and include:"
-          echo "    • Patient Search: Status 200, Bundle structure validation"
-          echo "    • Patient Create: Status 201, Resource validation, ID generation"
-          echo "    • Patient Read: Status 200, ID matching"
-          echo ""
-          echo "⚠️  Note: inso CLI cannot execute afterResponse script tests"
-          echo "    To run these tests, use Insomnia GUI or collection runner"
-          echo ""
-          echo "Stage 3 focuses on OpenAPI spec validation via linting"
+          echo "🧪 Running API endpoint tests..."
+          
+          export PATH="/tmp/inso:$PATH"
+          
+          if [ -f ".insomnia/fhir-api-insomnia.yaml" ]; then
+            echo "Running collection tests with afterResponse scripts..."
+            inso -w .insomnia/fhir-api-insomnia.yaml run collection wrk_8482e43ebd4e4c63923f4f78a48863ce -e env_ci_github_actions_auto --ci --disableCertValidation -r spec || echo "⚠️  Some tests failed"
+          else
+            echo "⚠️  Insomnia test file not found"
+          fi
       
       - name: Summary
         run: |
