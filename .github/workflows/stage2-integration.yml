@@ -155,7 +155,11 @@ jobs:
         working-directory: terraform/stages/2-integration
         run: |
           terraform init -backend-config=backend-azure.tfbackend
+          
+          # Get actual upstream_url from state to avoid parsing errors
+          UPSTREAM_URL=$(terraform output -raw upstream_url 2>/dev/null || echo "https://example.com/fhir")
+          
           terraform destroy -auto-approve \
             -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
             -var="control_plane_id=${{ inputs.control_plane_id }}" \
-            -var="upstream_url=dummy"
+            -var="upstream_url=$UPSTREAM_URL"
