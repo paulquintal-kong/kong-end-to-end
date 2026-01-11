@@ -2,6 +2,7 @@ name: Stage 3 - API Spec Testing
 
 on:
   workflow_dispatch:
+  # Automatic trigger disabled - use manual workflow_dispatch instead
   # workflow_run:
   #   workflows: ["Stage 2 - Integration"]
   #   types:
@@ -18,7 +19,7 @@ jobs:
   validate-spec:
     name: Validate OpenAPI Specification
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     
     steps:
       - name: Checkout code
