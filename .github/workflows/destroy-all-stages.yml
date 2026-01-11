@@ -3,48 +3,88 @@ name: Destroy All Stages
 on:
   workflow_dispatch:
     inputs:
-      control_plane_id:
-        description: 'Control Plane ID (for Stage 2)'
-        required: false
-        type: string
-      service_id:
-        description: 'Service ID (for Stage 4)'
-        required: false
-        type: string
-      catalog_api_id:
-        description: 'Catalog API ID (for Stage 5)'
-        required: false
+      confirm:
+        description: 'Type "destroy" to confirm teardown'
+        required: true
         type: string
 
 jobs:
+  get-stage-ids:
+    name: Get IDs from Terraform State
+    runs-on: ubuntu-latest
+    if: ${{ inputs.confirm == 'destroy' }}
+    outputs:
+      control_plane_id: ${{ steps.get-ids.outputs.control_plane_id }}
+      service_id: ${{ steps.get-ids.outputs.service_id }}
+      catalog_api_id: ${{ steps.get-ids.outputs.catalog_api_id }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+          terraform_wrapper: false
+      
+      - name: Get IDs from Terraform State
+        id: get-ids
+        env:
+          ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
+        run: |
+          # Get control_plane_id from Stage 1
+          cd terraform/stages/1-platform
+          terraform init -backend-config=backend-azure.tfbackend
+          CONTROL_PLANE_ID=$(terraform output -raw control_plane_id 2>/dev/null || echo "")
+          echo "control_plane_id=$CONTROL_PLANE_ID" >> $GITHUB_OUTPUT
+          
+          # Get service_id from Stage 2
+          if [ -n "$CONTROL_PLANE_ID" ]; then
+            cd ../2-integration
+            terraform init -backend-config=backend-azure.tfbackend
+            SERVICE_ID=$(terraform output -raw service_id 2>/dev/null || echo "")
+            echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+            
+            # Get catalog_api_id from Stage 4
+            cd ../4-api-product
+            terraform init -backend-config=backend-azure.tfbackend
+            CATALOG_API_ID=$(terraform output -raw catalog_api_id 2>/dev/null || echo "")
+            echo "catalog_api_id=$CATALOG_API_ID" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Found IDs:"
+          echo "  Control Plane: $CONTROL_PLANE_ID"
+          echo "  Service: $SERVICE_ID"
+          echo "  Catalog API: $CATALOG_API_ID"
+
   stage5:
     name: Destroy Stage 5 - Developer Portal
-    if: ${{ inputs.catalog_api_id != '' }}
+    needs: get-stage-ids
+    if: ${{ always() && needs.get-stage-ids.outputs.catalog_api_id != '' }}
     uses: ./.github/workflows/stage5-developer-portal.yml
     secrets: inherit
     with:
-      catalog_api_id: ${{ inputs.catalog_api_id }}
+      catalog_api_id: ${{ needs.get-stage-ids.outputs.catalog_api_id }}
       destroy: true
   
   stage4:
     name: Destroy Stage 4 - API Product
-    needs: stage5
-    if: ${{ always() && inputs.control_plane_id != '' && inputs.service_id != '' }}
+    needs: [get-stage-ids, stage5]
+    if: ${{ always() && needs.get-stage-ids.outputs.control_plane_id != '' && needs.get-stage-ids.outputs.service_id != '' }}
     uses: ./.github/workflows/stage4-api-product.yml
     secrets: inherit
     with:
-      control_plane_id: ${{ inputs.control_plane_id }}
-      service_id: ${{ inputs.service_id }}
+      control_plane_id: ${{ needs.get-stage-ids.outputs.control_plane_id }}
+      service_id: ${{ needs.get-stage-ids.outputs.service_id }}
       destroy: true
   
   stage2:
     name: Destroy Stage 2 - Integration
-    needs: stage4
-    if: ${{ always() && inputs.control_plane_id != '' }}
+    needs: [get-stage-ids, stage4]
+    if: ${{ always() && needs.get-stage-ids.outputs.control_plane_id != '' }}
     uses: ./.github/workflows/stage2-integration.yml
     secrets: inherit
     with:
-      control_plane_id: ${{ inputs.control_plane_id }}
+      control_plane_id: ${{ needs.get-stage-ids.outputs.control_plane_id }}
       destroy: true
   
   stage1:
