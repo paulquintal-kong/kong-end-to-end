@@ -58,7 +58,7 @@ jobs:
           echo "🧪 Running API endpoint tests..."
           if [ -f ".insomnia/fhir-api-insomnia.yaml" ]; then
             echo "Running Patient API test suite..."
-            inso run test --workingDir .insomnia/fhir-api-insomnia.yaml || echo "⚠️  Some tests failed"
+            inso run test --workingDir .insomnia/fhir-api-insomnia.yaml -r spec --verbose || true
           else
             echo "⚠️  Insomnia test file not found"
           fi
