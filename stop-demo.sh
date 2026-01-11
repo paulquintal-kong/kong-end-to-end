@@ -233,6 +233,18 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
                         # Run terraform destroy
                         echo -e "${CYAN}  - Running terraform destroy...${NC}"
                         DESTROY_OUTPUT=$(terraform destroy -auto-approve 2>&1)
+                        
+                        # Check if state is locked and try to unlock
+                        if echo "$DESTROY_OUTPUT" | grep -q "state blob is already locked"; then
+                            echo -e "${YELLOW}⚠${NC} State is locked, attempting to unlock..."
+                            LOCK_ID=$(echo "$DESTROY_OUTPUT" | grep "ID:" | head -1 | awk '{print $2}')
+                            if [ ! -z "$LOCK_ID" ]; then
+                                terraform force-unlock -force "$LOCK_ID" > /dev/null 2>&1
+                                echo -e "${CYAN}  - Retrying destroy after unlock...${NC}"
+                                DESTROY_OUTPUT=$(terraform destroy -auto-approve 2>&1)
+                            fi
+                        fi
+                        
                         if echo "$DESTROY_OUTPUT" | grep -qE "(Destroy complete|No changes|Your infrastructure matches)"; then
                             echo -e "${GREEN}✓${NC} Destroyed $STAGE resources"
                             
