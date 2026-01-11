@@ -139,9 +139,29 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
         if [ -z "$KONNECT_TOKEN" ]; then
             echo -e "${RED}✗${NC} KONNECT_TOKEN not set"
             echo -e "   ${YELLOW}Set with:${NC} export KONNECT_TOKEN='your-token'"
-        else
-            echo -e "${CYAN}Destroying Kong resources...${NC}"
-            echo ""
+            exit 1
+        fi
+        
+        # Load backend type from config file
+        BACKEND_TYPE=""
+        if [ -f ".demo-config" ]; then
+            source .demo-config
+            echo -e "${CYAN}Using backend: $BACKEND_TYPE (from .demo-config)${NC}"
+        fi
+        
+        # Check for required backend credentials
+        if [ "$BACKEND_TYPE" = "azure" ] && [ -z "$ARM_ACCESS_KEY" ]; then
+            echo -e "${RED}✗${NC} ARM_ACCESS_KEY not set (required for Azure backend)"
+            echo -e "   ${YELLOW}Set with:${NC} export ARM_ACCESS_KEY='your-access-key'"
+            exit 1
+        elif [ "$BACKEND_TYPE" = "aws" ] && [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo -e "${RED}✗${NC} AWS credentials not set (required for AWS backend)"
+            echo -e "   ${YELLOW}Set with:${NC} export AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+            exit 1
+        fi
+        
+        echo -e "${CYAN}Destroying Kong resources...${NC}"
+        echo ""
             
             # Destroy in reverse order (5 -> 4 -> 2 -> 1)
             STAGES=("5-developer-portal" "4-api-product" "2-integration" "1-platform")
@@ -201,10 +221,19 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
                                 ;;
                         esac
                         
-                        terraform init -backend-config="$BACKEND_CONFIG" -reconfigure > /dev/null 2>&1
+                        echo -e "${CYAN}  - Initializing terraform...${NC}"
+                        INIT_OUTPUT=$(terraform init -backend-config="$BACKEND_CONFIG" -reconfigure 2>&1)
+                        if [ $? -ne 0 ]; then
+                            echo -e "${RED}✗${NC} Failed to initialize $STAGE"
+                            echo "$INIT_OUTPUT" | grep -E "(Error:|Warning:)" | head -5
+                            cd - > /dev/null
+                            continue
+                        fi
                         
                         # Run terraform destroy
-                        if terraform destroy -auto-approve > /dev/null 2>&1; then
+                        echo -e "${CYAN}  - Running terraform destroy...${NC}"
+                        DESTROY_OUTPUT=$(terraform destroy -auto-approve 2>&1)
+                        if echo "$DESTROY_OUTPUT" | grep -qE "(Destroy complete|No changes|Your infrastructure matches)"; then
                             echo -e "${GREEN}✓${NC} Destroyed $STAGE resources"
                             
                             # Clean up local terraform files
@@ -213,7 +242,8 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
                             rm -f .terraform.lock.hcl
                             echo -e "${GREEN}✓${NC} Cleaned up $STAGE terraform files"
                         else
-                            echo -e "${YELLOW}⚠${NC} Failed to destroy $STAGE (may not exist or already destroyed)"
+                            echo -e "${YELLOW}⚠${NC} Failed to destroy $STAGE"
+                            echo "$DESTROY_OUTPUT" | grep -E "(Error:|Warning:)" | head -5
                         fi
                     else
                         echo -e "${CYAN}ℹ${NC} $STAGE - No terraform state found"
@@ -230,7 +260,6 @@ if [[ "$cleanup_kong" =~ ^[Yy]$ ]]; then
             
             ((STOPPED_SERVICES++))
         fi
-    else
         echo -e "${CYAN}ℹ${NC} Kong cleanup cancelled"
     fi
 else
