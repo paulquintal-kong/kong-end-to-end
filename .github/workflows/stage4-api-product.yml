@@ -47,7 +47,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      \n      - name: Load demo configuration
+      
+      - name: Load demo configuration
         id: load_config
         run: |
           if [ -f ".demo-state.json" ]; then
