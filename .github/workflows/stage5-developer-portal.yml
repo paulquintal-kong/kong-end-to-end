@@ -3,10 +3,6 @@ name: Stage 5 - Developer Portal
 on:
   workflow_dispatch:
     inputs:
-      catalog_api_id:
-        description: 'Catalog API ID from Stage 4'
-        required: true
-        type: string
       portal_name:
         description: 'Portal name (lowercase, dashes only)'
         required: false
@@ -59,6 +55,25 @@ jobs:
         run: |
           echo "ARM_ACCESS_KEY=${{ secrets.ARM_ACCESS_KEY }}" >> $GITHUB_ENV
       
+      - name: Get Catalog API ID from Terraform State
+        id: get_ids
+        run: |
+          # Get catalog_api_id from Stage 4 state
+          cd terraform/stages/4-api-product
+          terraform init -backend-config=backend-azure.tfbackend
+          CATALOG_API_ID=$(terraform output -raw catalog_api_id 2>/dev/null || echo "")
+          
+          if [ -z "$CATALOG_API_ID" ]; then
+            echo "❌ Failed to get catalog_api_id from Terraform state"
+            echo "Catalog API ID: ${CATALOG_API_ID:-not found}"
+            exit 1
+          fi
+          
+          echo "catalog_api_id=$CATALOG_API_ID" >> $GITHUB_OUTPUT
+          
+          echo "✓ Retrieved from Terraform state:"
+          echo "  Catalog API ID: $CATALOG_API_ID"
+      
       - name: Download Stage 4 outputs
         if: ${{ github.event_name == 'workflow_run' && !inputs.destroy }}
         uses: actions/download-artifact@v4
@@ -73,12 +88,8 @@ jobs:
         id: terraform
         working-directory: terraform/stages/5-developer-portal
         run: |
-          # Get catalog API ID from input or artifact
-          if [ -n "${{ inputs.catalog_api_id }}" ]; then
-            CATALOG_API_ID="${{ inputs.catalog_api_id }}"
-          else
-            CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage4-outputs.json)
-          fi
+          # Get catalog API ID from Terraform state
+          CATALOG_API_ID="${{ steps.get_ids.outputs.catalog_api_id }}"
           
           cat > terraform.tfvars <<EOF
           konnect_token           = "${{ secrets.KONNECT_TOKEN }}"
@@ -108,7 +119,10 @@ jobs:
         if: ${{ inputs.destroy }}
         working-directory: terraform/stages/5-developer-portal
         run: |
+          # Get catalog API ID from Terraform state for destroy
+          CATALOG_API_ID="${{ steps.get_ids.outputs.catalog_api_id }}"
+          
           terraform init -backend-config=backend-azure.tfbackend
           terraform destroy -auto-approve \
             -var="konnect_token=${{ secrets.KONNECT_TOKEN }}" \
-            -var="catalog_api_id=${{ inputs.catalog_api_id }}"
+            -var="catalog_api_id=$CATALOG_API_ID"
