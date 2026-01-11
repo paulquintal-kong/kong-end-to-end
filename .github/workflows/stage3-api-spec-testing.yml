@@ -48,15 +48,15 @@ jobs:
       
       - name: Validate Custom Spectral Rules
         run: |
-          if [ -f ".spectral.yaml" ]; then
-            echo ""
-            echo "📋 Validating against custom Spectral rules..."
           echo ""
           if [ -f ".spectral.yaml" ] && [ -f ".insomnia/fhir-api-openapi.yaml" ]; then
             echo "📋 Validating against custom Spectral rules..."
             spectral lint .insomnia/fhir-api-openapi.yaml --ruleset .spectral.yaml || true
           else
-            echo "ℹ️  No custom Spectral rules found (.spectral.yaml) - skipping custom validation
+            echo "ℹ️  No custom Spectral rules found (.spectral.yaml) - skipping custom validation"
+          fi
+      
+      - name: Summary
         run: |
           echo ""
           echo "✅ API Specification validation complete"
