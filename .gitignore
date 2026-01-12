@@ -24,6 +24,8 @@
 **/crash.log
 **/crash.*.log
 **/.publication_id
+**/terraform.tfvars
+**/terraform.tfvars.json
 
 # IDE
 .vscode/settings.json

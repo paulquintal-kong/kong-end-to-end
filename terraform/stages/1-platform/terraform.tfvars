@@ -1,1 +1,0 @@
-konnect_token = "kpat_xRqxdyYPVslkxwwjccpA3OqxiWeMS5wOZziQTsKD3wsHgpdfB"
