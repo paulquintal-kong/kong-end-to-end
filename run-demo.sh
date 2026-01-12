@@ -219,17 +219,25 @@ if [ -z "$CP_ENDPOINT" ] || [ "$CP_ENDPOINT" = "null" ]; then
     exit 1
 fi
 
-echo -e "${GREEN}✓ Control plane endpoint: $CP_ENDPOINT${NC}"
+# Remove https:// prefix and extract hostname:port
+CP_ENDPOINT_CLEAN=$(echo "$CP_ENDPOINT" | sed 's|https://||')
+TELEMETRY_ENDPOINT_CLEAN=$(echo "$TELEMETRY_ENDPOINT" | sed 's|https://||')
+
+# Extract just hostname for server name (without port)
+CP_SERVER_NAME=$(echo "$CP_ENDPOINT_CLEAN" | cut -d: -f1)
+TELEMETRY_SERVER_NAME=$(echo "$TELEMETRY_ENDPOINT_CLEAN" | cut -d: -f1)
+
+echo -e "${GREEN}✓ Control plane endpoint: $CP_ENDPOINT_CLEAN${NC}"
 
 # Create docker-compose override with dynamic endpoints
 cat > docker-compose.override.yml <<EOF
 services:
   kong-gateway:
     environment:
-      - KONG_CLUSTER_CONTROL_PLANE=${CP_ENDPOINT}
-      - KONG_CLUSTER_SERVER_NAME=${CP_ENDPOINT%%:*}
-      - KONG_CLUSTER_TELEMETRY_ENDPOINT=${TELEMETRY_ENDPOINT}
-      - KONG_CLUSTER_TELEMETRY_SERVER_NAME=${TELEMETRY_ENDPOINT%%:*}
+      - KONG_CLUSTER_CONTROL_PLANE=${CP_ENDPOINT_CLEAN}
+      - KONG_CLUSTER_SERVER_NAME=${CP_SERVER_NAME}
+      - KONG_CLUSTER_TELEMETRY_ENDPOINT=${TELEMETRY_ENDPOINT_CLEAN}
+      - KONG_CLUSTER_TELEMETRY_SERVER_NAME=${TELEMETRY_SERVER_NAME}
 EOF
 
 # Start Kong data plane
