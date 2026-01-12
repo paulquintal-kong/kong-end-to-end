@@ -24,7 +24,38 @@ echo -e "${RED}Kong Demo Shutdown${NC}"
 echo -e "${RED}==========================================${NC}"
 echo ""
 
+echo -e "${YELLOW}This will stop:${NC}"
+echo "  • Local Kong data plane container"
+echo "  • ngrok tunnels"
+echo "  • Docker containers"
+echo "  • Cloud resources (via destroy workflow)"
+echo ""
+read -p "Continue? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 0
+fi
+echo ""
+
 STOPPED_SERVICES=0
+
+# ========================================================================
+# 0. Stop Kong Data Plane
+# ========================================================================
+echo -e "${BLUE}0. Stopping Kong Data Plane...${NC}"
+
+if command -v docker &> /dev/null && docker info > /dev/null 2>&1; then
+    if docker ps -a | grep -q kong-dataplane; then
+        docker-compose down kong-gateway > /dev/null 2>&1 || docker stop kong-dataplane > /dev/null 2>&1
+        echo -e "${GREEN}✓${NC} Stopped Kong data plane"
+        ((STOPPED_SERVICES++))
+    else
+        echo -e "${YELLOW}⚠${NC} Kong data plane not running"
+    fi
+else
+    echo -e "${YELLOW}⚠${NC} Docker not available"
+fi
 
 # ========================================================================
 # 1. Stop ngrok tunnels
@@ -94,25 +125,42 @@ fi
 echo ""
 
 # ========================================================================
-# 3. Clean up Terraform lock files (optional)
+# 3. Destroy Cloud Resources
 # ========================================================================
-# echo -e "${BLUE}3. Cleaning up temporary files...${NC}"
-# 
-# # Remove Terraform lock files if user wants
-# read -p "Remove Terraform lock files? (y/n): " cleanup_tf
-# if [[ "$cleanup_tf" =~ ^[Yy]$ ]]; then
-#     find terraform/stages -name ".terraform.lock.hcl" -delete 2>/dev/null && \
-#         echo -e "${GREEN}✓${NC} Removed Terraform lock files" || \
-#         echo -e "${CYAN}ℹ${NC} No Terraform lock files found"
-# fi
-# 
-# # Remove tfvars files
-# read -p "Remove terraform.tfvars files? (y/n): " cleanup_tfvars
-# if [[ "$cleanup_tfvars" =~ ^[Yy]$ ]]; then
-#     find terraform/stages -name "terraform.tfvars" -delete 2>/dev/null && \
-#         echo -e "${GREEN}✓${NC} Removed terraform.tfvars files" || \
-#         echo -e "${CYAN}ℹ${NC} No tfvars files found"
-# fi
+echo -e "${BLUE}3. Destroying cloud resources...${NC}"
+
+if command -v gh &> /dev/null; then
+    echo -e "${YELLOW}Triggering destroy workflow...${NC}"
+    gh workflow run destroy-all-stages.yml -f confirm=destroy
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Destroy workflow triggered"
+        echo -e "${CYAN}Monitor: gh run list --workflow=destroy-all-stages.yml${NC}"
+        ((STOPPED_SERVICES++))
+    else
+        echo -e "${RED}✗${NC} Failed to trigger destroy workflow"
+    fi
+else
+    echo -e "${YELLOW}⚠${NC} GitHub CLI not available - skipping cloud resource destroy"
+    echo -e "${CYAN}Manually run: gh workflow run destroy-all-stages.yml -f confirm=destroy${NC}"
+fi
+
+echo ""
+
+# ========================================================================
+# 4. Clean up local certificates and overrides
+# ========================================================================
+echo -e "${BLUE}4. Cleaning up local files...${NC}"
+
+if [ -d ".kong" ]; then
+    rm -rf .kong
+    echo -e "${GREEN}✓${NC} Removed .kong certificates directory"
+fi
+
+if [ -f "docker-compose.override.yml" ]; then
+    rm -f docker-compose.override.yml
+    echo -e "${GREEN}✓${NC} Removed docker-compose.override.yml"
+fi
 
 echo ""
 

@@ -46,6 +46,34 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}✗ Docker not found. Install: https://docs.docker.com/get-docker/${NC}"
+    exit 1
+fi
+
+if ! docker info > /dev/null 2>&1; then
+    echo -e "${RED}✗ Docker daemon is not running. Please start Docker Desktop${NC}"
+    exit 1
+fi
+
+if ! command -v openssl &> /dev/null; then
+    echo -e "${RED}✗ OpenSSL not found. Install: brew install openssl${NC}"
+    exit 1
+fi
+
+# Check for Konnect token
+if [ -z "$KONNECT_TOKEN" ]; then
+    echo -e "${YELLOW}⚠ KONNECT_TOKEN environment variable not set${NC}"
+    echo "This is needed for data plane certificate registration."
+    echo "The script will attempt to continue but data plane setup may fail."
+    echo ""
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
 echo -e "${GREEN}✓ All prerequisites met${NC}"
 echo ""
 
@@ -113,6 +141,126 @@ cd - > /dev/null
 echo ""
 echo -e "${GREEN}${BOLD}✓ Platform Ready${NC}"
 echo -e "  Control Plane ID: ${BOLD}$CONTROL_PLANE_ID${NC}"
+echo ""
+
+# Deploy Kong Data Plane
+echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Stage 1b: Kong Data Plane Deployment${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${YELLOW}Business Context:${NC}"
+echo "  Deploying a local Kong Gateway data plane that connects to the cloud control"
+echo "  plane. This hybrid architecture provides low-latency API processing on your"
+echo "  infrastructure while maintaining centralized management and observability in"
+echo "  Konnect. Ideal for compliance requirements or edge deployments."
+echo ""
+echo -e "${YELLOW}Technical Actions:${NC}"
+echo "  • Generating mTLS certificates for secure control/data plane communication"
+echo "  • Registering data plane certificate with Konnect"
+echo "  • Starting Kong Gateway container in data plane mode"
+echo "  • Establishing secure connection to control plane"
+echo ""
+echo -e "${BOLD}Command:${NC} Deploy Kong Gateway data plane via Docker Compose"
+echo ""
+read -p "Press Enter to continue..."
+
+# Create .kong directory for certificates
+mkdir -p .kong
+
+echo -e "${YELLOW}⏳ Generating data plane certificates...${NC}"
+
+# Generate self-signed certificate for data plane
+openssl req -new -x509 -nodes \
+  -newkey rsa:2048 \
+  -keyout .kong/tls.key \
+  -out .kong/tls.crt \
+  -days 1095 \
+  -subj "/CN=kong-dataplane-demo/C=AU" > /dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}✗ Failed to generate certificates${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Certificates generated${NC}"
+
+# Upload certificate to Konnect
+echo -e "${YELLOW}⏳ Registering certificate with Konnect...${NC}"
+
+CERT_CONTENT=$(cat .kong/tls.crt)
+
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    -H "Authorization: Bearer ${KONNECT_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "{\"cert\": $(jq -Rs . <<< "$CERT_CONTENT")}" \
+    "https://au.api.konghq.com/v2/control-planes/${CONTROL_PLANE_ID}/dp-client-certificates")
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+BODY=$(echo "$RESPONSE" | sed '$d')
+
+if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "200" ]; then
+    echo -e "${YELLOW}⚠ Certificate may already be registered (HTTP $HTTP_CODE)${NC}"
+else
+    echo -e "${GREEN}✓ Certificate registered with Konnect${NC}"
+fi
+
+# Get cluster endpoints from Konnect
+echo -e "${YELLOW}⏳ Fetching control plane connection details...${NC}"
+
+CP_CONFIG=$(curl -s -X GET \
+    -H "Authorization: Bearer ${KONNECT_TOKEN}" \
+    "https://au.api.konghq.com/v2/control-planes/${CONTROL_PLANE_ID}")
+
+CP_ENDPOINT=$(echo "$CP_CONFIG" | jq -r '.config.control_plane_endpoint // empty')
+TELEMETRY_ENDPOINT=$(echo "$CP_CONFIG" | jq -r '.config.telemetry_endpoint // empty')
+
+if [ -z "$CP_ENDPOINT" ] || [ "$CP_ENDPOINT" = "null" ]; then
+    echo -e "${RED}✗ Failed to get control plane endpoint${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Control plane endpoint: $CP_ENDPOINT${NC}"
+
+# Create docker-compose override with dynamic endpoints
+cat > docker-compose.override.yml <<EOF
+services:
+  kong-gateway:
+    environment:
+      - KONG_CLUSTER_CONTROL_PLANE=${CP_ENDPOINT}
+      - KONG_CLUSTER_SERVER_NAME=${CP_ENDPOINT%%:*}
+      - KONG_CLUSTER_TELEMETRY_ENDPOINT=${TELEMETRY_ENDPOINT}
+      - KONG_CLUSTER_TELEMETRY_SERVER_NAME=${TELEMETRY_ENDPOINT%%:*}
+EOF
+
+# Start Kong data plane
+echo -e "${YELLOW}⏳ Starting Kong Gateway data plane...${NC}"
+docker-compose up -d kong-gateway > /dev/null 2>&1
+
+# Wait for Kong to be ready
+echo -e "${YELLOW}⏳ Waiting for data plane to connect...${NC}"
+MAX_RETRIES=30
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s http://localhost:8000 > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Kong Gateway data plane ready!${NC}"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    sleep 2
+    echo -ne "\r  Connecting... (${RETRY_COUNT}s elapsed)"
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo ""
+    echo -e "${YELLOW}⚠ Data plane may still be initializing. Check: docker logs kong-dataplane${NC}"
+else
+    echo ""
+fi
+
+echo ""
+echo -e "${GREEN}${BOLD}✓ Data Plane Deployed${NC}"
+echo -e "  Proxy listening on: ${BOLD}http://localhost:8000${NC}"
+echo -e "  Connected to control plane: ${BOLD}$CONTROL_PLANE_ID${NC}"
 echo ""
 
 # Stage 2: Integration
@@ -232,12 +380,14 @@ echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━�
 echo ""
 echo -e "${BOLD}What was accomplished:${NC}"
 echo "  ✓ Kong Gateway control plane provisioned"
+echo "  ✓ Local Kong data plane deployed and connected"
 echo "  ✓ FHIR Patient API integrated with gateway"
 echo "  ✓ API specification validated and tested"
 echo "  ✓ API product published to catalog with rate limiting"
 echo "  ✓ Developer portal configured for third-party access"
 echo ""
 echo -e "${YELLOW}Business Outcomes:${NC}"
+echo "  • Hybrid deployment: cloud management + local processing"
 echo "  • Reduced time-to-market for API partners (self-service onboarding)"
 echo "  • Protected backend resources with rate limiting policies"
 echo "  • Ensured API quality with automated contract testing"
@@ -245,7 +395,9 @@ echo "  • Centralized API governance and analytics"
 echo "  • Compliance-ready infrastructure for healthcare data"
 echo ""
 echo -e "${BOLD}Next Steps:${NC}"
+echo "  • Test the API: curl http://localhost:8000/fhir/Patient"
 echo "  • View the developer portal: https://d89b009b6d6e.au.kongportals.com"
 echo "  • Monitor API analytics in Kong Konnect"
+echo "  • Check data plane logs: docker logs -f kong-dataplane"
 echo "  • Run './stop-demo.sh' to teardown all resources"
 echo ""
