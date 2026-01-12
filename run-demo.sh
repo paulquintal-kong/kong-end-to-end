@@ -227,6 +227,14 @@ TELEMETRY_ENDPOINT_CLEAN=$(echo "$TELEMETRY_ENDPOINT" | sed 's|https://||')
 CP_SERVER_NAME=$(echo "$CP_ENDPOINT_CLEAN" | cut -d: -f1)
 TELEMETRY_SERVER_NAME=$(echo "$TELEMETRY_ENDPOINT_CLEAN" | cut -d: -f1)
 
+# Ensure endpoints have :443 port if not already present
+if [[ ! "$CP_ENDPOINT_CLEAN" =~ :[0-9]+$ ]]; then
+    CP_ENDPOINT_CLEAN="${CP_ENDPOINT_CLEAN}:443"
+fi
+if [[ ! "$TELEMETRY_ENDPOINT_CLEAN" =~ :[0-9]+$ ]]; then
+    TELEMETRY_ENDPOINT_CLEAN="${TELEMETRY_ENDPOINT_CLEAN}:443"
+fi
+
 echo -e "${GREEN}✓ Control plane endpoint: $CP_ENDPOINT_CLEAN${NC}"
 
 # Create docker-compose override with dynamic endpoints
