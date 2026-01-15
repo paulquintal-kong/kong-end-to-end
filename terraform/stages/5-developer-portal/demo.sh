@@ -30,45 +30,69 @@ CATALOG_API_ID=$(jq -r '.catalog_api_id.value' ../stage4-outputs.json)
 echo "📥 Using Catalog API ID from Stage 4: $CATALOG_API_ID"
 echo ""
 
-# Check for existing portal
-echo "🔍 Checking for existing Developer Portal..."
-PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v3/portals" \
-  -H "Authorization: Bearer $KONNECT_TOKEN" \
-  -H "Content-Type: application/json")
-
-PORTAL_COUNT=$(echo "$PORTALS" | jq '.data | length')
-
-if [ "$PORTAL_COUNT" -eq 0 ]; then
-    echo ""
-    echo "❌ No Developer Portal found in your Konnect organization"
-    echo ""
-    echo "Please create a Developer Portal first:"
-    echo "  1. Go to https://au.cloud.konghq.com/portals"
-    echo "  2. Click 'New Portal'"
-    echo "  3. Configure your portal settings"
-    echo "  4. Re-run this script"
-    echo ""
-    exit 1
+# Load portal ID from demo state or detect from API
+PORTAL_ID=""
+if [ -f "../../.demo-state.json" ]; then
+    PORTAL_ID=$(jq -r '.portal_id // empty' ../../.demo-state.json)
+    if [ -n "$PORTAL_ID" ] && [ "$PORTAL_ID" != "null" ]; then
+        echo "📋 Found Portal ID in .demo-state.json: $PORTAL_ID"
+    fi
 fi
 
-echo "✓ Found $PORTAL_COUNT portal(s)"
-echo ""
-echo "Available Portals:"
-echo "$PORTALS" | jq -r '.data[] | "  - \(.name) (ID: \(.id))"'
-echo ""
+# Check for existing portal if not in demo state
+if [ -z "$PORTAL_ID" ] || [ "$PORTAL_ID" = "null" ]; then
+    echo "🔍 Checking for existing Developer Portal..."
+    PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v3/portals" \
+      -H "Authorization: Bearer $KONNECT_TOKEN" \
+      -H "Content-Type: application/json")
 
-# Prompt for portal ID or use first one
-if [ "$PORTAL_COUNT" -eq 1 ]; then
-    PORTAL_ID=$(echo "$PORTALS" | jq -r '.data[0].id')
-    PORTAL_NAME=$(echo "$PORTALS" | jq -r '.data[0].name')
-    echo "Using portal: $PORTAL_NAME ($PORTAL_ID)"
-else
-    echo "Multiple portals found. Please select one:"
-    read -p "Enter Portal ID (or press Enter for first portal): " input_portal_id
-    if [ -z "$input_portal_id" ]; then
+    PORTALS=$(curl -s -X GET "https://au.api.konghq.com/v3/portals" \
+      -H "Authorization: Bearer $KONNECT_TOKEN" \
+      -H "Content-Type: application/json")
+
+    PORTAL_COUNT=$(echo "$PORTALS" | jq '.data | length')
+
+    if [ "$PORTAL_COUNT" -eq 0 ]; then
+        echo ""
+        echo "❌ No Developer Portal found in your Konnect organization"
+        echo ""
+        echo "Please create a Developer Portal first:"
+        echo "  1. Go to https://au.cloud.konghq.com/portals"
+        echo "  2. Click 'New Portal'"
+        echo "  3. Configure your portal settings"
+        echo "  4. Re-run this script"
+        echo ""
+        exit 1
+    fi
+
+    echo "✓ Found $PORTAL_COUNT portal(s)"
+    echo ""
+    echo "Available Portals:"
+    echo "$PORTALS" | jq -r '.data[] | "  - \(.name) (ID: \(.id))"'
+    echo ""
+
+    # Prompt for portal ID or use first one
+    if [ "$PORTAL_COUNT" -eq 1 ]; then
         PORTAL_ID=$(echo "$PORTALS" | jq -r '.data[0].id')
+        PORTAL_NAME=$(echo "$PORTALS" | jq -r '.data[0].name')
+        echo "Using portal: $PORTAL_NAME ($PORTAL_ID)"
     else
-        PORTAL_ID="$input_portal_id"
+        echo "Multiple portals found. Please select one:"
+        read -p "Enter Portal ID (or press Enter for first portal): " input_portal_id
+        if [ -z "$input_portal_id" ]; then
+            PORTAL_ID=$(echo "$PORTALS" | jq -r '.data[0].id')
+        else
+            PORTAL_ID="$input_portal_id"
+        fi
+    fi
+    
+    # Update demo state with portal ID
+    if [ -f "../../.demo-state.json" ]; then
+        echo "📝 Updating .demo-state.json with portal_id..."
+        jq --arg portal_id "$PORTAL_ID" \
+           '.portal_id = $portal_id | .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ")' \
+           ../../.demo-state.json > ../../.demo-state.json.tmp && \
+        mv ../../.demo-state.json.tmp ../../.demo-state.json
     fi
 fi
 echo ""
@@ -97,14 +121,26 @@ case $backend_choice in
 esac
 echo ""
 
-# Create terraform.tfvars
+# Create terraform.tfvars with values from previous stages
 echo ""
 echo "📝 Creating terraform.tfvars..."
 cat > terraform.tfvars <<EOF
+# Auto-generated from demo state and previous stage outputs
 konnect_token  = "$KONNECT_TOKEN"
 catalog_api_id = "$CATALOG_API_ID"
 portal_id      = "$PORTAL_ID"
+
+# Portal configuration (reference only - portal already configured)
+portal_name         = "Patient Records API"
+portal_display_name = "Developer Portal"
+enable_auth         = false
+auto_approve_developers = false
 EOF
+
+echo "✓ terraform.tfvars created with:"
+echo "   catalog_api_id = $CATALOG_API_ID"
+echo "   portal_id = $PORTAL_ID"
+echo ""
 
 # Initialize
 echo ""

@@ -87,13 +87,27 @@ if [ "$confirm" = "yes" ]; then
     echo ""
     echo "📤 Outputs for Stage 3:"
     terraform output -json > ../stage2-outputs.json
-    echo "   Service ID: $(terraform output -raw service_id)"
-    echo "   API Endpoint: $(terraform output -raw api_endpoint)"
+    SERVICE_ID=$(terraform output -raw service_id)
+    API_ENDPOINT=$(terraform output -raw api_endpoint)
+    echo "   Service ID: $SERVICE_ID"
+    echo "   API Endpoint: $API_ENDPOINT"
+    
+    # Update demo state file
+    if [ -f "../../.demo-state.json" ]; then
+        echo ""
+        echo "📝 Updating .demo-state.json..."
+        jq --arg service_id "$SERVICE_ID" \
+           '.service_id = $service_id | .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ")' \
+           ../../.demo-state.json > ../../.demo-state.json.tmp && \
+        mv ../../.demo-state.json.tmp ../../.demo-state.json
+        echo "   ✓ Updated service_id"
+    fi
+    
     echo ""
     echo "🧪 Test the API:"
-    echo "   curl $(terraform output -raw api_endpoint)"
+    echo "   curl $API_ENDPOINT"
     echo ""
-    echo "➡️  Next: cd ../3-api-product && ./demo.sh"
+    echo "➡️  Next: cd ../4-api-product && ./demo.sh"
 else
     echo "❌ Cancelled"
 fi

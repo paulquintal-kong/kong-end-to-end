@@ -76,6 +76,17 @@ if [ "$confirm" = "yes" ]; then
     CONTROL_PLANE_ENDPOINT=$(terraform output -raw control_plane_endpoint)
     echo "   Control Plane ID: $CONTROL_PLANE_ID"
     echo "   Control Plane Endpoint: $CONTROL_PLANE_ENDPOINT"
+    
+    # Update demo state file
+    if [ -f "../../.demo-state.json" ]; then
+        echo ""
+        echo "📝 Updating .demo-state.json..."
+        jq --arg control_plane_id "$CONTROL_PLANE_ID" \
+           '.control_plane_id = $control_plane_id | .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ")' \
+           ../../.demo-state.json > ../../.demo-state.json.tmp && \
+        mv ../../.demo-state.json.tmp ../../.demo-state.json
+        echo "   ✓ Updated control_plane_id"
+    fi
     echo ""
     
     # ========================================================================

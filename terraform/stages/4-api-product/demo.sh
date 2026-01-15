@@ -87,12 +87,28 @@ if [ "$confirm" = "yes" ]; then
     terraform apply -auto-approve
     
     echo ""
-    echo "✅ Stage 3 Complete!"
+    echo "✅ Stage 4 Complete!"
     echo ""
-    echo "📤 Outputs for Stage 4:"
-    terraform output -json > ../stage3-outputs.json
-    echo "   Catalog API ID: $(terraform output -raw catalog_api_id)"
+    echo "📤 Outputs for Stage 5:"
+    terraform output -json > ../stage4-outputs.json
+    CATALOG_API_ID=$(terraform output -raw catalog_api_id)
+    CATALOG_SERVICE_ID=$(terraform output -raw catalog_service_id)
+    echo "   Catalog API ID: $CATALOG_API_ID"
+    echo "   Catalog Service ID: $CATALOG_SERVICE_ID"
     echo "   Rate Limit: $rate_limit requests/minute"
+    
+    # Update demo state file
+    if [ -f "../../.demo-state.json" ]; then
+        echo ""
+        echo "📝 Updating .demo-state.json..."
+        jq --arg catalog_api_id "$CATALOG_API_ID" \
+           --arg catalog_service_id "$CATALOG_SERVICE_ID" \
+           '.catalog_api_id = $catalog_api_id | .catalog_service_id = $catalog_service_id | .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ")' \
+           ../../.demo-state.json > ../../.demo-state.json.tmp && \
+        mv ../../.demo-state.json.tmp ../../.demo-state.json
+        echo "   ✓ Updated catalog_api_id and catalog_service_id"
+    fi
+    
     echo ""
     echo "🔍 View in Kong Konnect:"
     echo "   Catalog: https://au.cloud.konghq.com/us/catalog"
@@ -102,7 +118,7 @@ if [ "$confirm" = "yes" ]; then
     API_ENDPOINT=$(jq -r '.api_endpoint.value' ../stage2-outputs.json)
     echo "   curl $API_ENDPOINT"
     echo ""
-    echo "➡️  Next: cd ../4-developer-portal && ./demo.sh"
+    echo "➡️  Next: cd ../5-developer-portal && ./demo.sh"
 else
     echo "❌ Cancelled"
 fi

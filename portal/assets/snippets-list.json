@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "page": {
+      "total": 6,
+      "size": 20,
+      "number": 1
+    }
+  },
+  "data": [
+    {
+      "id": "13869aa7-08bf-4bd8-a470-07304ccf545c",
+      "name": "example-guides-page-banner",
+      "title": "Example Page Banner",
+      "visibility": "public",
+      "status": "published",
+      "description": "An example of a page banner reusable snippet.",
+      "created_at": "2026-01-09T04:38:24.550488Z",
+      "updated_at": "2026-01-09T04:38:24.565871Z"
+    },
+    {
+      "id": "9fe0e9dd-a439-4174-8993-89410b2df37c",
+      "name": "example-guides-page-header",
+      "title": "Example Guides Page Header",
+      "visibility": "public",
+      "status": "published",
+      "description": "An example of a page header reusable snippet with dynamic data.",
+      "created_at": "2026-01-09T04:38:24.580229Z",
+      "updated_at": "2026-01-09T04:38:24.60395Z"
+    },
+    {
+      "id": "cee37794-ed1b-489e-a750-182a765ec5bc",
+      "name": "example-guides-page-nav",
+      "title": "Guides",
+      "visibility": "public",
+      "status": "published",
+      "description": "A snippet to display the page navigation starting with the /guides page. Ideally utilized in the 'page-layout.sidebar-left' page config.",
+      "created_at": "2026-01-09T04:38:24.620111Z",
+      "updated_at": "2026-01-09T04:38:24.644389Z"
+    },
+    {
+      "id": "c6aa7925-459f-451d-9829-b3adeb86bb9f",
+      "name": "example-hero-image",
+      "title": "Hero Image Example",
+      "visibility": "public",
+      "status": "published",
+      "description": "An example of a hero snippet containing a reusable SVG image.",
+      "created_at": "2026-01-09T04:38:24.658632Z",
+      "updated_at": "2026-01-09T04:38:24.671378Z"
+    },
+    {
+      "id": "585d3c97-de5c-42d9-8e8a-13467bc59338",
+      "name": "example-logo-bar",
+      "title": "Example Logo Bar",
+      "visibility": "public",
+      "status": "published",
+      "description": "An example of a snippet containing a row of SVG logos.",
+      "created_at": "2026-01-09T04:38:24.689596Z",
+      "updated_at": "2026-01-09T04:38:24.715515Z"
+    },
+    {
+      "id": "4bdaf6f5-067e-4567-8512-cbbc323f90ee",
+      "name": "example-page-toc",
+      "title": "On this page",
+      "visibility": "public",
+      "status": "published",
+      "description": "A snippet to display the table of contents for a page. Ideally utilized in the 'page-layout.sidebar-right' page config.",
+      "created_at": "2026-01-09T04:38:24.730683Z",
+      "updated_at": "2026-01-09T04:38:24.752002Z"
+    }
+  ]
+}
